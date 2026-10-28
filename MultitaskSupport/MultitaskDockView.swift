@@ -267,8 +267,8 @@ class AppInfoProvider {
     private func expandedDockHeight(for width: CGFloat, iconSize: CGFloat) -> CGFloat {
         expandedDockBaseHeight(for: width) + CGFloat(self.apps.count) * iconSize
     }
-    
 
+    
 
     // Calculate adaptive icon size
     public var adaptiveIconSize: CGFloat {
@@ -741,8 +741,8 @@ class AppInfoProvider {
         }
     }
     
-
-
+    
+    
     /// Where an app's icon sits in the dock, in `view`'s coordinates, for a
     /// window going into it or coming back out of it, as a Mac window goes
     /// into the Dock. While the dock is tucked away, the tab it's tucked
