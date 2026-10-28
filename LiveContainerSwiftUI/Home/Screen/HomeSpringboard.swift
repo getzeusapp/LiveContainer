@@ -59,6 +59,8 @@ struct HomeSpringboard: View {
         }
         .frame(width: metrics.size.width, height: metrics.size.height)
         .coordinateSpace(.named(HomeDesign.coordinateSpace))
+        // Measured in the Home Screen's coordinate space, as edit mode's drag is.
+        .onDrop(of: [HomeIconDropDelegate.iconType], delegate: HomeIconDropDelegate(model: model))
         .onChange(of: metrics, initial: true, publishMetrics)
         .onChange(of: scenePhase) {
             if scenePhase == .active {

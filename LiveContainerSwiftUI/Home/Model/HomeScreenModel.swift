@@ -92,6 +92,12 @@ final class HomeScreenModel {
     /// Whether the open folder's name is being typed.
     var isEditingFolderName = false
     @ObservationIgnored var pendingTarget: HomeSlot?
+    /// The icon whose menu last opened, which UIKit offers for dragging out of
+    /// the menu.
+    @ObservationIgnored var menuDragItem: HomeItem?
+    /// Whether an icon dragged out of its menu is moving across the Home
+    /// Screen. Icon menus keep their actions until it is dropped.
+    var isMenuDragging = false
     @ObservationIgnored var reflowTask: Task<Void, Never>?
     @ObservationIgnored var pageTurnDirection = 0
     @ObservationIgnored var pageTurnTask: Task<Void, Never>?

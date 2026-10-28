@@ -224,6 +224,44 @@ extension HomeScreenModel {
         }
     }
 
+    // MARK: Dragging out of the menu
+
+    /// Offers an icon for dragging out of its menu. UIKit asks as the menu
+    /// opens, whether or not the icon is then dragged.
+    func offerMenuDrag(of item: HomeItem) {
+        menuDragItem = item
+    }
+
+    /// Follows the finger dragging an icon out of its menu, as on iOS: the
+    /// first move starts edit mode and picks the icon up, and from then on it
+    /// moves like any icon dragged in edit mode.
+    func menuDragMoved(to finger: CGPoint) {
+        guard let item = menuDragItem, !isSearching else {
+            return
+        }
+        if !isMenuDragging {
+            isMenuDragging = true
+            beginEditing()
+        }
+        guard drag == nil, let metrics, let origin = layout.slot(of: item) else {
+            dragChanged(item, finger: finger, start: finger)
+            return
+        }
+        // The finger may be well away from the icon by the time the drag
+        // reaches the Home Screen, so the icon comes to the finger.
+        dragChanged(item, finger: finger, start: iconCenter(of: origin, in: layout, metrics: metrics))
+    }
+
+    /// Drops an icon dragged out of its menu where it is.
+    func menuDragEnded() {
+        menuDragItem = nil
+        guard isMenuDragging else {
+            return
+        }
+        isMenuDragging = false
+        dragEnded()
+    }
+
     /// Puts the dragged icon down at once, where it was picked up.
     func cancelDrag() {
         stopPageTurn()

@@ -6,9 +6,10 @@
 import SwiftUI
 
 /// One icon on the pages or in the dock, and everything it does: a tap opens
-/// it, a long press lifts it with its menu, and in edit mode it jiggles while
-/// on screen, shows its minus badge and can be held and dragged to a new
-/// place, or moved with VoiceOver's actions.
+/// it, a long press lifts it with its menu, and dragging it from there starts
+/// edit mode with it in hand. In edit mode it jiggles while on screen, shows
+/// its minus badge and can be held and dragged to a new place, or moved with
+/// VoiceOver's actions.
 struct HomeIconCell: View {
     /// The icon.
     let item: HomeItem
@@ -64,6 +65,12 @@ struct HomeIconCell: View {
         .contentShape(.contextMenuPreview, HomeIconPreviewShape(iconSize: metrics.iconSize, cornerRadius: metrics.iconCornerRadius))
         .contextMenu {
             HomeIconMenu(item: item, app: app)
+        }
+        // Lets the icon be dragged out of its menu, which starts edit mode.
+        // UIKit draws nothing under the finger: the Home Screen's own lifted
+        // icon follows it, through HomeIconDropDelegate.
+        .onDrag(menuDragItem) {
+            Color.clear.frame(width: 1, height: 1)
         }
         .highPriorityGesture(editDrag, including: model.isEditing ? .all : .subviews)
         .onChange(of: isHeld) { wasHeld, isHeld in
@@ -160,6 +167,16 @@ struct HomeIconCell: View {
             return
         }
         model.dragChanged(item, finger: drag.location, start: drag.startLocation)
+    }
+
+    private func menuDragItem() -> NSItemProvider {
+        model.offerMenuDrag(of: item)
+        let provider = NSItemProvider()
+        provider.registerDataRepresentation(forTypeIdentifier: HomeIconDropDelegate.iconType.identifier, visibility: .ownProcess) { completion in
+            completion(Data(), nil)
+            return nil
+        }
+        return provider
     }
 
     private func open() {
