@@ -4,10 +4,25 @@
 #import "../LiveContainer/utils.h"
 #import <LocalAuthentication/LocalAuthentication.h>
 #import "Localization.h"
+#include <notify.h>
 
 UIInterfaceOrientation LCOrientationLock = UIInterfaceOrientationUnknown;
 NSMutableArray<NSString*>* LCSupportedUrlSchemes = nil;
 BOOL launchURLProcessed = NO;
+
+/// Tells zContainer a touch began on this app, in its multitasking window,
+/// so the window comes to the front. The notification is named for the app's
+/// container: the last part of the home folder it was given.
+static void LCPostWindowTouched(void) {
+    static char name[256];
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        const char *home = getenv("HOME");
+        NSString *folder = home ? @(home).lastPathComponent : @"";
+        snprintf(name, sizeof(name), "%s%s", LC_WINDOW_TOUCHED_NOTIFICATION_PREFIX, folder.UTF8String);
+    });
+    notify_post(name);
+}
 
 __attribute__((constructor))
 static void UIKitGuestHooksInit() {
@@ -19,6 +34,10 @@ static void UIKitGuestHooksInit() {
     swizzle(UIApplication.class, @selector(setDelegate:), @selector(hook_setDelegate:));
     swizzle(UIScene.class, @selector(scene:didReceiveActions:fromTransitionContext:), @selector(hook_scene:didReceiveActions:fromTransitionContext:));
     swizzle(UIScene.class, @selector(openURL:options:completionHandler:), @selector(hook_openURL:options:completionHandler:));
+    // Only an app in a multitasking window has one to bring forward.
+    if (NSUserDefaults.isLiveProcess) {
+        swizzle(UIApplication.class, @selector(sendEvent:), @selector(hook_sendEvent:));
+    }
     NSInteger LCOrientationLockDirection = [NSUserDefaults.guestAppInfo[@"LCOrientationLock"] integerValue];
     if(LCOrientationLockDirection != 0 && [UIDevice.currentDevice userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
         switch (LCOrientationLockDirection) {
@@ -526,6 +545,21 @@ static LCControlAppURLHandling LCHandleControlAppURL(NSURL *url, NSString** modi
 
 // Handler for AppDelegate
 @implementation UIApplication(LiveContainerHook)
+/// A touch beginning on the app brings its multitasking window to the front,
+/// as a touch on the window's title bar does.
+- (void)hook_sendEvent:(UIEvent *)event {
+    [self hook_sendEvent:event];
+    if (event.type != UIEventTypeTouches) {
+        return;
+    }
+    for (UITouch *touch in event.allTouches) {
+        if (touch.phase == UITouchPhaseBegan) {
+            LCPostWindowTouched();
+            return;
+        }
+    }
+}
+
 - (void)hook__applicationOpenURLAction:(id)action payload:(NSDictionary *)payload origin:(id)origin {
     NSURL *url = [NSURL URLWithString:payload[UIApplicationLaunchOptionsURLKey]];
     NSString* replacementURLString = nil;

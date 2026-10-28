@@ -221,6 +221,19 @@ enum HomeDesign {
     static let editButtonSize = 36.0
     /// The space at each end of Done.
     static let editButtonPadding = 18.0
+    /// An iPhone's edit mode buttons, as iOS 27 draws them: two glass
+    /// capsules of the same size, add and Done, measured on an iPhone 13 Pro
+    /// Max.
+    static let editCapsuleWidth = 66.0
+    static let editCapsuleHeight = 28.0
+    /// The point size of the glyphs in those capsules.
+    static let editCapsuleGlyphSize = 15.0
+    /// Where those capsules sit on an iPhone in portrait, where the status
+    /// bar was: their centers this share of the status bar's height down, and
+    /// their outer ends this share of the screen's width in from the sides,
+    /// under the status bar's left and right items.
+    static let editControlsCenterFraction = 0.79
+    static let editControlsInsetFraction = 0.1
 
     // MARK: Home button
 

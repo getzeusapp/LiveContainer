@@ -87,7 +87,7 @@ target LiveContainerSwiftUI type=com.apple.product-type.framework
   GENERATE_INFOPLIST_FILE = YES
   INFOPLIST_KEY_NSHumanReadableCopyright = 
   INSTALL_PATH = $(LOCAL_LIBRARY_DIR)/Frameworks
-  IPHONEOS_DEPLOYMENT_TARGET = 15.0
+  IPHONEOS_DEPLOYMENT_TARGET = 17.5
   LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/Frameworks @loader_path/Frameworks
   MARKETING_VERSION = 1.0
   MODULE_VERIFIER_SUPPORTED_LANGUAGES = objective-c objective-c++
@@ -336,5 +336,5 @@ synced folder LiveProcess
 synced folder Tweaks
   PBXFileSystemSynchronizedBuildFileExceptionSet LiveContainerShared: ['Tweaks.h']
 synced folder MultitaskSupport
-  PBXFileSystemSynchronizedBuildFileExceptionSet LiveContainerSwiftUI: ['AppSceneViewController.h', 'AppSceneViewController.m', 'DecoratedAppSceneViewController.h', 'DecoratedAppSceneViewController.m', 'LCStatusBarManager.h', 'LCStatusBarManager.m', 'MultitaskAppWindow.swift', 'MultitaskDockView.swift', 'MultitaskManager.swift', 'PiPManager.h', 'PiPManager.m', 'ResizeHandleView.h', 'ResizeHandleView.m', 'UIKitHooks.m', 'UIKitPrivate+MultitaskSupport.h', 'VirtualWindowsHostView.h', 'VirtualWindowsHostView.m']
+  PBXFileSystemSynchronizedBuildFileExceptionSet LiveContainerSwiftUI: ['AppSceneViewController.h', 'AppSceneViewController.m', 'DecoratedAppSceneViewController.h', 'DecoratedAppSceneViewController.m', 'LCSplitDividerView.h', 'LCSplitDividerView.m', 'LCStatusBarManager.h', 'LCStatusBarManager.m', 'LCWindowSnapManager.h', 'LCWindowSnapManager.m', 'MultitaskAppWindow.swift', 'MultitaskDockView.swift', 'MultitaskManager.swift', 'PiPManager.h', 'PiPManager.m', 'ResizeHandleView.h', 'ResizeHandleView.m', 'UIKitHooks.m', 'UIKitPrivate+MultitaskSupport.h', 'VirtualWindowsHostView.h', 'VirtualWindowsHostView.m']
   PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet 17413FB02D9C0BAE00F3F928: ['LCStatusBarManager.m', 'VirtualWindowsHostView.m']

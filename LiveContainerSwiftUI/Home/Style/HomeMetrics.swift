@@ -164,7 +164,7 @@ struct HomeMetrics: Equatable {
             )
             editControlsCenterY = max(safeArea.top * 0.54, 24)
             editControlsInset = max(safeArea.leading, safeArea.trailing) + 16
-            editButtonSize = HomeDesign.editButtonSize
+            editButtonSize = HomeDesign.editCapsuleHeight
             let left = max(safeArea.leading, 16 * scale) + 8 * scale
             let right = dockFrame.minX - 8 * scale
             // Below edit mode's buttons with room for the first row's minus
@@ -249,9 +249,15 @@ struct HomeMetrics: Equatable {
                 y: firstIconTop + iconSize / 2
             )
             dockPitch = pitch.width
-            editControlsCenterY = max(safeArea.top * 0.54, 24)
-            editControlsInset = 16
-            editButtonSize = HomeDesign.editButtonSize
+            // Where iOS 27 puts them, in the status bar's place, which edit
+            // mode hides: a little above its bottom, under its left and right
+            // items.
+            editControlsCenterY = max(
+                safeArea.top * HomeDesign.editControlsCenterFraction,
+                HomeDesign.editCapsuleHeight / 2 + 4
+            )
+            editControlsInset = max(size.width * HomeDesign.editControlsInsetFraction, 16)
+            editButtonSize = HomeDesign.editCapsuleHeight
         }
 
         iconCornerRadius = iconSize * HomeDesign.iconCornerFraction

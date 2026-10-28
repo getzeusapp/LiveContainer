@@ -12,4 +12,6 @@
 - (instancetype)initWithFrame:(CGRect)frame;
 /// The window's corner radius, which the arc follows.
 @property(nonatomic) CGFloat windowCornerRadius;
+/// Whether the window is being resized, which draws the arc bolder.
+@property(nonatomic, getter=isActive) BOOL active;
 @end

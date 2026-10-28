@@ -9,6 +9,8 @@
 /// How far inside the window's edge the arc runs.
 static const CGFloat ResizeHandleInset = 6.0;
 static const CGFloat ResizeHandleLineWidth = 5.0;
+/// The arc's width while the window is being resized.
+static const CGFloat ResizeHandleActiveLineWidth = 7.0;
 /// How much of the corner's quarter turn the arc covers, centered on it.
 static const CGFloat ResizeHandleSweep = M_PI / 3.0;
 
@@ -31,6 +33,16 @@ static const CGFloat ResizeHandleSweep = M_PI / 3.0;
     }
     self.accessibilityLabel = @"Resize";
     return self;
+}
+
+- (void)setActive:(BOOL)active {
+    if (_active == active) {
+        return;
+    }
+    _active = active;
+    // A sublayer's width and color animate on their own.
+    _arcLayer.lineWidth = active ? ResizeHandleActiveLineWidth : ResizeHandleLineWidth;
+    [self updateArcColor];
 }
 
 - (void)setWindowCornerRadius:(CGFloat)windowCornerRadius {
@@ -64,8 +76,10 @@ static const CGFloat ResizeHandleSweep = M_PI / 3.0;
 }
 
 - (void)updateArcColor {
-    // Readable over whatever the app draws in that corner, light or dark.
-    _arcLayer.strokeColor = [[UIColor secondaryLabelColor] resolvedColorWithTraitCollection:self.traitCollection].CGColor;
+    // Readable over whatever the app draws in that corner, light or dark,
+    // and stronger while the window is being resized.
+    UIColor *color = self.active ? UIColor.labelColor : UIColor.secondaryLabelColor;
+    _arcLayer.strokeColor = [color resolvedColorWithTraitCollection:self.traitCollection].CGColor;
 }
 
 @end

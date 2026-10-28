@@ -32565,6 +32565,18 @@
         }
       }
     },
+    "zc.home.openInWindow" : {
+      "comment" : "Home Screen app menu: switch that has the app open in a multitasking window over zContainer's Home Screen, rather than taking over zContainer.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open in Window"
+          }
+        }
+      }
+    },
     "zc.home.pageIndicator %lld %lld" : {
       "comment" : "Home Screen: VoiceOver value of the search pill. The first number is the page showing, the second how many pages there are.",
       "extractionState" : "manual",

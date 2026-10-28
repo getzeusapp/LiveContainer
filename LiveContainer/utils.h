@@ -3,6 +3,11 @@
 #include <objc/runtime.h>
 #include <os/lock.h>
 #define PrivClass(name) ((Class)objc_lookUpClass(#name))
+/// The Darwin notification an app in a multitasking window posts as a touch
+/// begins on it, followed by the folder name of its container, so the window
+/// it's in comes to the front. A touch on the app goes straight to it, past
+/// zContainer.
+#define LC_WINDOW_TOUCHED_NOTIFICATION_PREFIX "com.kdt.livecontainer.windowTouched."
 
 const char **_CFGetProgname(void);
 const char **_CFGetProcessPath(void);
