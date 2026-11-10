@@ -5,43 +5,46 @@
 
 import SwiftUI
 
-/// Settings > Appearance: whether the Home button floats over the apps you
-/// open, which it doesn't until it's turned on here, while zContainer's own
-/// screens always show it; how the icons on zContainer's Home Screen look, on
-/// iOS 18 and later, which draw dark icons, where by default they follow Dark
-/// Mode, as iOS's own do; and zContainer's own icon on the iPhone's Home
-/// Screen, which a second zContainer doesn't offer, so it keeps the icon that
-/// tells it apart.
+/// Settings > Appearance: zContainer's app theme, Light, Dark or Automatic as
+/// iOS is, which apps' icons follow too; whether the Home button floats over
+/// the apps you open, which it doesn't until it's turned on here, while
+/// zContainer's own screens always show it; on iPad, whether the dock shows
+/// the apps opened most recently after its icons, as iPadOS's Show Suggested
+/// and Recent Apps in Dock does, on until it's turned off; and zContainer's
+/// own icon on the iPhone's Home Screen, which a second zContainer doesn't
+/// offer, so it keeps the icon that tells it apart.
 struct AppearanceSettingsView: View {
-    @AppStorage(HomeIconStyle.storageKey, store: LCUtils.appGroupUserDefault) private var iconStyle = HomeIconStyle.automatic
+    @AppStorage(AppAppearance.storageKey, store: LCUtils.appGroupUserDefault) private var appearance = AppAppearance.automatic
 
     /// Whether apps show the Home button, which TweakLoader reads as
     /// "LCShowHomeButtonInApps" before it draws the button over an app. Off
     /// until it's turned on.
     @AppStorage("LCShowHomeButtonInApps") private var showsHomeButtonInApps = false
 
+    /// Whether the iPad's dock shows recent apps, which the Home Screen
+    /// follows.
+    @AppStorage(HomeDockRecents.settingKey) private var showsDockRecents = true
+
     var body: some View {
         List {
+            Section {
+                AppThemePicker(appearance: $appearance)
+            } header: {
+                Text("zc.settings.appearance.theme".loc)
+                    .settingsSectionHeader()
+            }
+
             Section {
                 Toggle("zc.settings.appearance.homeButtonInApps".loc, isOn: $showsHomeButtonInApps)
             } footer: {
                 Text("zc.settings.appearance.homeButtonInAppsFooter".loc)
             }
 
-            if #available(iOS 18.0, *) {
+            if !SharedModel.isPhone {
                 Section {
-                    Picker("zc.settings.appearance.iconStyle".loc, selection: $iconStyle) {
-                        ForEach(HomeIconStyle.allCases) { style in
-                            Text(style.title)
-                                .tag(style)
-                        }
-                    }
-                    .pickerStyle(.inline)
-                    .labelsHidden()
-                } header: {
-                    Text("zc.settings.appearance.iconStyle".loc)
+                    Toggle("zc.settings.appearance.dockRecents".loc, isOn: $showsDockRecents)
                 } footer: {
-                    Text("zc.settings.appearance.iconStyleFooter".loc)
+                    Text("zc.settings.appearance.dockRecentsFooter".loc)
                 }
             }
 
@@ -50,8 +53,7 @@ struct AppearanceSettingsView: View {
                     AppIconPicker()
                 } header: {
                     Text("zc.settings.appIcon".loc)
-                } footer: {
-                    Text("zc.settings.appIconFooter".loc)
+                        .settingsSectionHeader()
                 }
             }
         }

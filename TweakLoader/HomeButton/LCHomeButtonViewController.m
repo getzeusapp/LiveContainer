@@ -14,7 +14,9 @@ static const CGFloat LCHomeButtonFlingCarry = 0.12;
 
 @interface LCHomeButtonViewController ()
 @property (nonatomic) LCHomeButtonView *button;
-@property (nonatomic) LCHomeButtonPlacement *placement;
+// Where the button was moved to, or nil while it rests in its first place,
+// which follows an iPad as it's turned.
+@property (nonatomic, nullable) LCHomeButtonPlacement *placement;
 // The black view over the app while zContainer opens.
 @property (nonatomic, nullable) UIView *cover;
 @property (nonatomic) BOOL isDragging;
@@ -53,8 +55,38 @@ static const CGFloat LCHomeButtonFlingCarry = 0.12;
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
     if (!self.isDragging) {
-        self.button.center = [self.placement centerInArea:self.restingArea];
+        self.button.center = [self.currentPlacement centerInArea:self.restingArea];
     }
+}
+
+// Turning an iPad all the way round keeps the view's size, so it isn't laid
+// out again on its own, but the first place moves to the other side.
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
+    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+    [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+        [self.view setNeedsLayout];
+        [self.view layoutIfNeeded];
+    } completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+        [self.view setNeedsLayout];
+    }];
+}
+
+// Where the button rests: where it was moved to, or else its first place,
+// which on an iPad is beside the iPad's Home button as it's turned now.
+- (LCHomeButtonPlacement *)currentPlacement {
+    return self.placement ?: [LCHomeButtonPlacement firstPlacementForInterfaceOrientation:self.currentInterfaceOrientation];
+}
+
+// Which way the screen shows the app now.
+- (UIInterfaceOrientation)currentInterfaceOrientation {
+    UIWindowScene *scene = self.view.window.windowScene;
+    if (!scene) {
+        return UIInterfaceOrientationPortrait;
+    }
+    if (@available(iOS 16.0, *)) {
+        return scene.effectiveGeometry.interfaceOrientation;
+    }
+    return scene.interfaceOrientation;
 }
 
 // The area the button's center rests in: the safe area, less the button's

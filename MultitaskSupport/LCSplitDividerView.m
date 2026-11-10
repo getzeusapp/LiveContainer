@@ -37,10 +37,27 @@ static const CGFloat LCDividerPillSlopAcross = 12.0;
     pan.maximumNumberOfTouches = 1;
     [self addGestureRecognizer:pan];
 
+    UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dividerDoubleTapped)];
+    doubleTap.numberOfTapsRequired = 2;
+    [self addGestureRecognizer:doubleTap];
+
     self.isAccessibilityElement = YES;
     self.accessibilityLabel = @"Split";
     self.accessibilityTraits = UIAccessibilityTraitAdjustable;
+    __weak typeof(self) weakSelf = self;
+    self.accessibilityCustomActions = @[
+        [[UIAccessibilityCustomAction alloc] initWithName:@"Swap" actionHandler:^BOOL(UIAccessibilityCustomAction *action) {
+            [weakSelf dividerDoubleTapped];
+            return YES;
+        }],
+    ];
     return self;
+}
+
+- (void)dividerDoubleTapped {
+    if ([self.delegate respondsToSelector:@selector(splitDividerDidDoubleTap:)]) {
+        [self.delegate splitDividerDidDoubleTap:self];
+    }
 }
 
 - (void)setStacksVertically:(BOOL)stacksVertically {
@@ -85,6 +102,9 @@ static const CGFloat LCDividerPillSlopAcross = 12.0;
     switch (pan.state) {
         case UIGestureRecognizerStateBegan:
             [self setMoving:YES];
+            if ([self.delegate respondsToSelector:@selector(splitDividerDidBeginMoving:)]) {
+                [self.delegate splitDividerDidBeginMoving:self];
+            }
             break;
         case UIGestureRecognizerStateChanged: {
             CGPoint translation = [pan translationInView:self.superview];

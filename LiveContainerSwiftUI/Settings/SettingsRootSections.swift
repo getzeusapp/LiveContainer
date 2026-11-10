@@ -39,21 +39,21 @@ struct SettingsRootSections: View {
 
         Section {
             SettingsPageLink(page: .general) {
-                SettingsRow(title: "zc.settings.general".loc, systemImage: "gear", color: .gray)
+                SettingsRow(page: .general)
             }
 
             SettingsPageLink(page: .appearance) {
-                SettingsRow(title: "zc.settings.appearance".loc, systemImage: "circle.lefthalf.filled", color: .blue)
+                SettingsRow(page: .appearance)
             }
 
             SettingsPageLink(page: .wallpaper) {
-                SettingsRow(title: "zc.settings.wallpaper".loc, systemImage: "camera.macro", color: .cyan)
+                SettingsRow(page: .wallpaper)
             }
         }
 
         Section {
             SettingsPageLink(page: .apps) {
-                SettingsRow(title: "lc.tabView.apps".loc, systemImage: "square.grid.2x2.fill", color: .indigo)
+                SettingsRow(page: .apps)
             }
 
             SettingsAddAppRow()
@@ -61,7 +61,7 @@ struct SettingsRootSections: View {
 
         Section {
             SettingsPageLink(page: .advanced) {
-                SettingsRow(title: "zc.settings.advanced".loc, systemImage: "hammer.fill", color: .gray)
+                SettingsRow(page: .advanced)
             }
         }
     }

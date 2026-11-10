@@ -50,6 +50,10 @@ struct LCAppSettingsView: View {
     
     var body: some View {
         Form {
+            // The app's icon, name and what its page is for, as the Settings
+            // app's page for each app starts.
+            SettingsPageHeader(app: model)
+
             Section {
                 HStack {
                     Text("lc.appSettings.bundleId".loc)
@@ -109,6 +113,7 @@ struct LCAppSettingsView: View {
                 }
             } header: {
                 Text("lc.common.data".loc)
+                .settingsSectionHeader()
             }
             
             Section {
@@ -116,6 +121,7 @@ struct LCAppSettingsView: View {
                     ForEach(model.uiContainers.indices, id:\.self) { i in
                         NavigationLink {
                             LCContainerView(container: model.uiContainers[i], uiDefaultDataFolder: $model.uiDefaultDataFolder, delegate: self)
+                                .settingsPageMargins()
                         } label: {
                             Text(model.uiContainers[i].name)
                         }
@@ -143,6 +149,7 @@ struct LCAppSettingsView: View {
                 
             } header: {
                 Text("lc.common.container".loc)
+                .settingsSectionHeader()
             }
             
             
@@ -285,6 +292,7 @@ struct LCAppSettingsView: View {
                             }
                             .pickerStyle(.inline)
                         }
+                        .settingsPageMargins()
 
                     } else {
                         Text("lc.common.loading".loc)
@@ -320,6 +328,7 @@ struct LCAppSettingsView: View {
                 }
             } header: {
                 Text("lc.appSettings.fixes".loc)
+                .settingsSectionHeader()
             } footer: {
                 Text("lc.appSettings.useLCBundleIdDesc".loc)
             }
@@ -406,6 +415,7 @@ struct LCAppSettingsView: View {
                 }
             } header: {
                 Text("lc.common.statistics")
+                .settingsSectionHeader()
             }
 
         }

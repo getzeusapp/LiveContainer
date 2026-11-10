@@ -11,9 +11,9 @@ import SwiftUI
 enum OnboardingDesign {
     // MARK: Colors
 
-    /// zContainer's pink, from its icon, which tints onboarding the way
-    /// Zeus's pink tints Zeus's.
-    static let accent = Color(red: 0xDB / 255, green: 0x2C / 255, blue: 0x99 / 255)
+    /// zContainer's accent, Zeus's pink, which tints onboarding the way it
+    /// tints Zeus.
+    static let accent = AppAccent.color
     /// The pink gradient behind the apps on zContainer's icon, from its top
     /// left corner to its bottom right, as `Scripts/zc/art/AppIcon.svg` has it.
     static let markGradientStart = Color(red: 0xE6 / 255, green: 0x4B / 255, blue: 0xAE / 255)

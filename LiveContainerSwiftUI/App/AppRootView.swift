@@ -14,6 +14,7 @@ struct AppRootView: View {
     @Environment(OnboardingModel.self) private var onboarding
     @Environment(HomeScreenModel.self) private var home
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @EnvironmentObject private var sceneDelegate: SceneDelegate
 
     var body: some View {
         ZStack {
@@ -31,7 +32,13 @@ struct AppRootView: View {
             }
         }
         .onChange(of: onboarding.isPresented, onboardingChanged)
+        // Where the Home button goes, on the Home Screen and every screen
+        // over it: beside an iPad's Home button, as the iPad is turned.
+        .environment(\.homeButtonEdge, HomeButtonEdge(sceneDelegate.interfaceOrientation))
         .appIconAppearance()
+        // Zeus's pink, for switches too, as Zeus tints its own, in place of
+        // iOS's green.
+        .tint(AppAccent.color)
     }
 
     /// Closes what's open over the Home Screen, like Settings, when

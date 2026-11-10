@@ -11,10 +11,8 @@ enum HomeGlassShape {
     case capsule
     /// A circle, for round buttons.
     case circle
-    /// A rounded rectangle whose corners follow the screen's, for the dock.
-    /// `fallbackRadius` is the radius where they can't, before iOS 26.
-    case screenConcentric(fallbackRadius: Double)
-    /// A rounded rectangle with a fixed corner radius.
+    /// A rounded rectangle with a fixed corner radius, with continuous
+    /// corners, as the floating dock's are.
     case rounded(Double)
     /// A rectangle that runs to the screen's sides and bottom edge, for the
     /// dock on iPhones with a Home button.
@@ -28,10 +26,8 @@ enum HomeGlassShape {
             AnyShape(.capsule)
         case .circle:
             AnyShape(.circle)
-        case .screenConcentric(let fallbackRadius):
-            AnyShape(ConcentricRectangle(corners: .concentric(minimum: .fixed(fallbackRadius)), isUniform: true))
         case .rounded(let radius):
-            AnyShape(.rect(cornerRadius: radius))
+            AnyShape(.rect(cornerRadius: radius, style: .continuous))
         case .edgeToEdge:
             AnyShape(.rect)
         }
@@ -54,8 +50,8 @@ enum HomeGlassShape {
             AnyShape(.capsule)
         case .circle:
             AnyShape(.circle)
-        case .screenConcentric(let radius), .rounded(let radius):
-            AnyShape(.rect(cornerRadius: radius))
+        case .rounded(let radius):
+            AnyShape(.rect(cornerRadius: radius, style: .continuous))
         case .edgeToEdge:
             AnyShape(.rect)
         }

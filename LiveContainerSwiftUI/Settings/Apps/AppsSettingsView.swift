@@ -61,7 +61,8 @@ struct AppsSettingsView: View {
         }
         .navigationTitle("lc.tabView.apps".loc)
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $searchText)
+        .searchable(text: $searchText, prompt: "zc.settings.apps.search".loc)
+        .settingsBottomSearch()
         .navigationDestination(isPresented: $isShowingHiddenApps) {
             HiddenAppsSettingsView()
         }

@@ -44,4 +44,17 @@ enum HomeSlot: Hashable, Sendable {
             nil
         }
     }
+
+    /// The position right after this one, on the same page, in the dock or
+    /// in the same folder.
+    var following: HomeSlot {
+        switch self {
+        case .page(let page, let index):
+            .page(page, index: index + 1)
+        case .dock(let index):
+            .dock(index + 1)
+        case .folder(let id, let index):
+            .folder(id, index: index + 1)
+        }
+    }
 }

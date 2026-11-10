@@ -14,6 +14,9 @@ struct SettingsRow<Value: View>: View {
     let systemImage: String
     /// The color of the row's icon.
     let color: Color
+    /// The Settings app's icon for the row, where it has one: an IconServices
+    /// graphic icon type, which shows in place of the symbol.
+    var graphicIcon: String?
     /// What shows on the trailing side, such as the current choice.
     @ViewBuilder let value: Value
 
@@ -24,7 +27,7 @@ struct SettingsRow<Value: View>: View {
             Label {
                 Text(title)
             } icon: {
-                SettingsIcon(systemImage: systemImage, color: color)
+                SettingsIcon(systemImage: systemImage, color: color, graphicIcon: graphicIcon)
             }
         }
     }
@@ -32,8 +35,8 @@ struct SettingsRow<Value: View>: View {
 
 extension SettingsRow where Value == EmptyView {
     /// A row with nothing on its trailing side.
-    init(title: String, systemImage: String, color: Color) {
-        self.init(title: title, systemImage: systemImage, color: color) {
+    init(title: String, systemImage: String, color: Color, graphicIcon: String? = nil) {
+        self.init(title: title, systemImage: systemImage, color: color, graphicIcon: graphicIcon) {
             EmptyView()
         }
     }

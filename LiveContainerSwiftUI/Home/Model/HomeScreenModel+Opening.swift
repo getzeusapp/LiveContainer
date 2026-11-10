@@ -26,33 +26,44 @@ extension HomeScreenModel {
         switch item {
         case .settings:
             present(.settings)
+            noteOpenedBehindScreen(item)
         case .app(let key):
             guard let app = apps[key] else {
                 return
             }
             launch(app, from: item)
-        case .folder:
+        case .folder, .widget:
             break
         }
     }
 
     /// Launches an app through the coordinator. Just before zContainer turns
-    /// into the app, the app zooms open from its icon, or from the middle of
-    /// the screen when its icon isn't showing. The page showing is saved
-    /// then, as zContainer quits on the way into the app and comes back to it.
-    func launch(_ app: LCAppModel, from item: HomeItem? = nil) {
+    /// into the app, the app zooms open from `startFrame`, or else from its
+    /// icon, or from the middle of the screen when its icon isn't showing.
+    /// The page showing is saved then, as zContainer quits on the way into
+    /// the app and comes back to it. The iPad dock's recent apps note it
+    /// once the zoom covers them, as iPadOS's change behind the app, or once
+    /// it has opened without the zoom, with JIT or in a window.
+    func launch(_ app: LCAppModel, from item: HomeItem? = nil, startingAt startFrame: CGRect? = nil) {
         let zoomItem = item ?? .app(app.homeKey ?? "")
-        let frame = item.flatMap(iconFrame(of:)) ?? centeredIconFrame()
+        let frame = startFrame ?? item.flatMap(iconFrame(of:)) ?? centeredIconFrame()
         let returnPage = page ?? 0
+        let opened = app.homeKey.map(HomeItem.app)
         // An app that needs JIT goes to it without the zoom, so its page is
         // saved now. Any other app saves it as zContainer quits into it.
         if app.appInfo.isJITNeeded || app.appInfo.is32bit {
             HomeLayoutStorage.saveReturnPage(returnPage)
         }
         Task {
-            await coordinator.open(app) {
+            let didOpen = await coordinator.open(app) {
                 HomeLayoutStorage.saveReturnPage(returnPage)
                 await self.playLaunchZoom(HomeLaunchZoom(item: zoomItem, app: app, iconFrame: frame))
+                if let opened {
+                    self.noteOpened(opened)
+                }
+            }
+            if didOpen, let opened {
+                noteOpened(opened)
             }
         }
     }
@@ -92,13 +103,13 @@ extension HomeScreenModel {
             guard page == (self.page ?? 0) else {
                 return nil
             }
-            return metrics.iconFrame(around: metrics.iconCenter(at: index))
+            return metrics.iconFrame(around: layout.center(ofPage: page, index: index, on: metrics))
         case .dock(let index)?:
-            // At the size the dock draws it, which an iPad window too narrow
-            // for a full dock shrinks. Elsewhere it is the pages' icon size.
-            let count = layout.dock.count
-            let size = metrics.dockIconSize(count: count)
-            let center = metrics.dockIconCenter(at: index, count: count)
+            // At the size the dock draws it, which an iPad dock holding more
+            // than fit across it shrinks. Elsewhere it is the pages' icon size.
+            let contents = dockContents(of: layout)
+            let size = metrics.dockIconSize(contents)
+            let center = metrics.dockIconCenter(at: index, in: contents)
             return CGRect(x: center.x - size / 2, y: center.y - size / 2, width: size, height: size)
         case .folder(let id, let index)?:
             guard id == openFolderID, isFolderShown, index / HomeFolder.iconsPerPage == (folderPage ?? 0) else {
@@ -134,6 +145,7 @@ extension HomeScreenModel {
     /// to add an app.
     func presentedScreenDidClose() {
         isCoveredByScreen = false
+        zoomsFromRecent = nil
         // Settings and app settings cover the Home Screen full screen, which
         // takes it off the window until now.
         if #available(iOS 16.0, *), MultitaskDockManager.hasWindows {
@@ -151,8 +163,12 @@ extension HomeScreenModel {
         }
     }
 
-    /// Opens an app's settings, zooming out of its icon.
-    func showSettings(for app: LCAppModel) {
+    /// Opens an app's settings, zooming out of its icon, or out of its place
+    /// among the iPad dock's recent apps when they were opened from there.
+    func showSettings(for app: LCAppModel, fromRecent: Bool = false) {
+        if fromRecent, let key = app.homeKey {
+            zoomsFromRecent = .app(key)
+        }
         present(.appSettings(app))
     }
 
@@ -181,7 +197,9 @@ extension HomeScreenModel {
     func openWithJIT(_ app: LCAppModel) {
         HomeLayoutStorage.saveReturnPage(page ?? 0)
         Task {
-            await coordinator.open(app, forceJIT: true)
+            if await coordinator.open(app, forceJIT: true), let key = app.homeKey {
+                noteOpened(.app(key))
+            }
         }
     }
 

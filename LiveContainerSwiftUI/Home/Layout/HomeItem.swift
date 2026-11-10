@@ -5,8 +5,9 @@
 
 import Foundation
 
-/// One icon on the Home Screen: an app inside zContainer, zContainer's own
-/// Settings, or a folder of them. The layout saves each item as its `id`.
+/// One thing on the Home Screen: an app inside zContainer, zContainer's own
+/// Settings, a folder of them, or a widget. The layout saves each item as its
+/// `id`.
 enum HomeItem: Hashable, Identifiable, Sendable {
     /// An installed app, by its key: its bundle ID and the folder it is
     /// installed in, as `bundleId:relativeBundlePath`. The key stays the same
@@ -20,6 +21,10 @@ enum HomeItem: Hashable, Identifiable, Sendable {
     /// A folder, by the id of its entry in the layout's `folders`.
     case folder(String)
 
+    /// A widget, or a stack of them, by the id of its entry in the layout's
+    /// `widgets`. It goes on the pages only, never in the dock or a folder.
+    case widget(String)
+
     /// The text the layout is saved as: `settings`, or `app:` and the app's key.
     var id: String {
         switch self {
@@ -29,6 +34,17 @@ enum HomeItem: Hashable, Identifiable, Sendable {
             "settings"
         case .folder(let id):
             "folder:\(id)"
+        case .widget(let id):
+            "widget:\(id)"
+        }
+    }
+
+    /// Whether this is a widget, which stays on the pages.
+    var isWidget: Bool {
+        if case .widget = self {
+            true
+        } else {
+            false
         }
     }
 
@@ -42,7 +58,7 @@ enum HomeItem: Hashable, Identifiable, Sendable {
     }
 
     /// Reads an item from the text `id` makes. Returns nil for text that
-    /// names no app, Settings or folder.
+    /// names no app, Settings, folder or widget.
     init?(id: String) {
         if id == "settings" {
             self = .settings
@@ -50,6 +66,8 @@ enum HomeItem: Hashable, Identifiable, Sendable {
             self = .app(String(id.dropFirst(4)))
         } else if id.hasPrefix("folder:"), id.count > 7 {
             self = .folder(String(id.dropFirst(7)))
+        } else if id.hasPrefix("widget:"), id.count > 7 {
+            self = .widget(String(id.dropFirst(7)))
         } else {
             return nil
         }

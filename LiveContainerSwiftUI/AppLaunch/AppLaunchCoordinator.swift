@@ -755,9 +755,13 @@ final class AppLaunchCoordinator {
     /// asks for Face ID first, and the app runs: signed if it needs to be, then
     /// in a multitasking window or with zContainer turning into it, as its
     /// settings say, and with JIT when `forceJIT` asks, as Open with JIT does.
+    /// `multitask` overrides the settings, as Open in Split Screen does.
     /// `willLaunch` runs just before zContainer turns into the app, after
-    /// signing, so the Home Screen can zoom into it.
-    func open(_ app: LCAppModel, forceJIT: Bool? = nil, willLaunch: (@MainActor () async -> Void)? = nil) async {
+    /// signing, so the Home Screen can zoom into it. Returns whether the app
+    /// opened or came forward, which it doesn't when Face ID is cancelled or
+    /// running it fails.
+    @discardableResult
+    func open(_ app: LCAppModel, forceJIT: Bool? = nil, multitask: Bool? = nil, willLaunch: (@MainActor () async -> Void)? = nil) async -> Bool {
         if #available(iOS 16.0, *),
            let folderName = app.uiSelectedContainer?.folderName,
            MultitaskManager.isUsing(container: folderName) {
@@ -769,7 +773,7 @@ final class AppLaunchCoordinator {
                 found = MultitaskDockManager.shared.bringMultitaskViewToFront(uuid: folderName)
             }
             if found {
-                return
+                return true
             }
         }
 
@@ -777,24 +781,26 @@ final class AppLaunchCoordinator {
         // the install short.
         guard !isInstalling else {
             errorMessage = "zc.install.busy".loc
-            return
+            return false
         }
 
         if app.appInfo.isLocked && !sharedModel.isHiddenAppUnlocked {
             do {
                 guard try await LCUtils.authenticateUser() else {
-                    return
+                    return false
                 }
             } catch {
                 errorMessage = error.localizedDescription
-                return
+                return false
             }
         }
 
         do {
-            try await app.runApp(forceJIT: forceJIT, willLaunch: willLaunch)
+            try await app.runApp(multitask: multitask, forceJIT: forceJIT, willLaunch: willLaunch)
+            return true
         } catch {
             errorMessage = error.localizedDescription
+            return false
         }
     }
 

@@ -43,11 +43,25 @@ import SwiftUI
 
 class SceneDelegate: NSObject, UIWindowSceneDelegate, ObservableObject { // Make SceneDelegate conform ObservableObject
     var window: UIWindow?
+    /// Which way the scene shows its interface, which an iPad's Home button
+    /// follows: see HomeButtonEdge.
+    @Published private(set) var interfaceOrientation = UIInterfaceOrientation.portrait
+    private var geometryObservation: NSKeyValueObservation?
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         self.window = (scene as? UIWindowScene)?.keyWindow
+        // Turning an iPad all the way round leaves the window's size as it
+        // was, so its geometry tells which way it now shows.
+        geometryObservation = (scene as? UIWindowScene)?.observe(\.effectiveGeometry, options: [.initial, .new]) { [weak self] scene, _ in
+            let orientation = scene.effectiveGeometry.interfaceOrientation
+            DispatchQueue.main.async {
+                if self?.interfaceOrientation != orientation {
+                    self?.interfaceOrientation = orientation
+                }
+            }
+        }
     }
-    
+
 }
 
 

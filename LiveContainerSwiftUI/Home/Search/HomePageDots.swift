@@ -11,13 +11,20 @@ struct HomePageDots: View {
     let count: Int
     /// The page showing, counting from 0.
     let current: Int
+    /// A dot's size: the search pill's, or the larger dots iPhones with a
+    /// Home button show on their own.
+    var dotSize = HomeDesign.pageDotSize
+    /// The space between dots.
+    var spacing = HomeDesign.pageDotSpacing
+    /// The dots' color, white unless they sit on something bright.
+    var color = Color.white
 
     var body: some View {
-        HStack(spacing: HomeDesign.pageDotSpacing) {
+        HStack(spacing: spacing) {
             ForEach(0..<count, id: \.self) { page in
                 Circle()
-                    .fill(page == current ? Color.white : Color.white.opacity(0.35))
-                    .frame(width: HomeDesign.pageDotSize, height: HomeDesign.pageDotSize)
+                    .fill(page == current ? color : color.opacity(HomeDesign.pageDotOtherOpacity))
+                    .frame(width: dotSize, height: dotSize)
             }
         }
         .animation(HomeDesign.modeChange, value: current)

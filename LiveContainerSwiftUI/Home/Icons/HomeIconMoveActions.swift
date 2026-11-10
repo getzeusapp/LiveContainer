@@ -12,6 +12,8 @@ import SwiftUI
 struct HomeIconMoveActions: ViewModifier {
     /// The icon the actions move.
     let item: HomeItem
+    /// Whether the icon can be moved: not one of the iPad dock's recent apps.
+    var isEnabled = true
 
     @Environment(HomeScreenModel.self) private var model
 
@@ -19,7 +21,7 @@ struct HomeIconMoveActions: ViewModifier {
         // Only edit mode gates the actions here, so a drag's every step
         // doesn't redraw each icon. The model ignores them during a drag.
         content.accessibilityActions {
-            if model.isEditing {
+            if model.isEditing && isEnabled {
                 if let before = model.accessibilityNeighbor(of: item, by: -1) {
                     Button("zc.home.moveBefore %@".localizeWithFormat(model.title(of: before)), action: moveBefore)
                 }
@@ -55,7 +57,7 @@ struct HomeIconMoveActions: ViewModifier {
 
 extension View {
     /// Offers the actions that move an icon in edit mode without a drag.
-    func homeIconMoveActions(for item: HomeItem) -> some View {
-        modifier(HomeIconMoveActions(item: item))
+    func homeIconMoveActions(for item: HomeItem, isEnabled: Bool = true) -> some View {
+        modifier(HomeIconMoveActions(item: item, isEnabled: isEnabled))
     }
 }

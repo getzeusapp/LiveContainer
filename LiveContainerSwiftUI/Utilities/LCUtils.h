@@ -48,6 +48,10 @@ typedef NS_ENUM(NSInteger, GeneratedIconStyle){
 
 @interface UIImage(LiveContainer)
 + (instancetype)generateIconForBundleURL:(NSURL*)url style:(GeneratedIconStyle)style hasBorder:(BOOL)hasBorder;
+/// One of the graphic icons the Settings app draws beside its rows, such as
+/// com.apple.graphic-icon.gear for General, drawn by IconServices `size`
+/// points square, or nil where the system has no such icon.
++ (instancetype)graphicIconOfType:(NSString *)type size:(CGFloat)size dark:(BOOL)dark;
 @end
 BOOL saveCGImage(CGImageRef image, NSURL *url);
 CGImageRef loadCGImageFromURL(NSURL *url);

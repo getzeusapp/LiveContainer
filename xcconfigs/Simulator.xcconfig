@@ -1,0 +1,26 @@
+//
+//  Simulator.xcconfig
+//  LiveContainer
+//
+//  For building zContainer to run in the iOS Simulator, passed to xcodebuild
+//  with -xcconfig by Scripts/simulator/run.sh. Device builds never read it.
+//
+//  The Simulator only runs zContainer's own interface: guest apps are built for
+//  devices, and the hooks that run them need ARM. On an Intel Mac, whose
+//  Simulator is x86_64, litehook's ARM code can't build at all, so it's left
+//  out, with dyld_bypass_validation.m and Tweaks/Dyld.m, which patch dyld for guest
+//  apps in ARM too, and LiveContainer/Tweaks/SimulatorStubs.m
+//  stands in for all three.
+//
+
+EXCLUDED_SOURCE_FILE_NAMES[arch=x86_64] = litehook.c dyld_bypass_validation.m Dyld.m
+
+// No separate debug dylib for SwiftUI previews, which this build doesn't use:
+// with one, ld writes a dependency file Xcode can't read, and the link fails.
+ENABLE_DEBUG_DYLIB = NO
+
+// The entitlements the Simulator gives the app, which it reads from this section
+// as it does for Xcode's own Simulator builds; the code signature itself stays
+// plain ad hoc, since the Mac refuses one with iOS entitlements. They hold
+// get-task-allow, so zContainer doesn't warn that it isn't a development build.
+OTHER_LDFLAGS = $(inherited) -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __entitlements -Xlinker $(SRCROOT)/Scripts/simulator/zContainer.entitlements

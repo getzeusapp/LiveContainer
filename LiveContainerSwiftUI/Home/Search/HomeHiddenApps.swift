@@ -6,41 +6,41 @@
 import SwiftUI
 
 /// The Hidden section at the end of search, like the Hidden folder of the
-/// iOS App Library: it is always there, so it gives nothing away, and shows
-/// the hidden apps once Face ID unlocks them. An app's menu there can stop
-/// requiring Face ID, which brings it back to the Home Screen.
+/// iOS App Library, drawn as Spotlight draws its sections: a title, with Show
+/// at its other end, which asks for Face ID and then shows the hidden apps on
+/// a panel under it. It is always there, so it gives nothing away. An app's
+/// menu there can stop requiring Face ID, which brings it back to the Home
+/// Screen.
 struct HomeHiddenApps: View {
+    /// How many apps a panel row holds.
+    let columns: Int
     /// Where things go on this screen, for the icons' size.
     let metrics: HomeMetrics
+    /// Whether it's search's first section, with nothing suggested above it.
+    let isFirst: Bool
 
     @EnvironmentObject private var sharedModel: SharedModel
     @Environment(AppLaunchCoordinator.self) private var coordinator
 
     var body: some View {
-        VStack(spacing: HomeDesign.searchSpacing) {
-            Button(action: unlock) {
-                Label("zc.home.hidden".loc, systemImage: sharedModel.isHiddenAppUnlocked ? "eye.slash" : "lock.fill")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity, minHeight: HomeDesign.searchFieldHeight, alignment: .leading)
-                    .padding(.horizontal, HomeDesign.searchPanelPadding)
-                    .contentShape(.rect)
-            }
-            .buttonStyle(.plain)
-            .disabled(sharedModel.isHiddenAppUnlocked)
-
+        VStack(alignment: .leading, spacing: 0) {
+            HomeSearchSectionHeader(
+                title: "zc.home.hidden".loc,
+                actionTitle: sharedModel.isHiddenAppUnlocked ? nil : "zc.home.search.showHidden".loc,
+                action: unlock,
+                isFirst: isFirst
+            )
             if sharedModel.isHiddenAppUnlocked {
                 if sharedModel.hiddenApps.isEmpty {
                     Text("zc.home.noHiddenApps".loc)
-                        .foregroundStyle(.secondary)
-                        .padding(.bottom, HomeDesign.searchPanelPadding)
+                        .font(.system(size: HomeDesign.searchHeaderFontSize))
+                        .foregroundStyle(.white.opacity(HomeDesign.searchHeaderOpacity))
+                        .padding(.top, HomeDesign.searchRowPadding)
                 } else {
-                    HomeAppGrid(apps: sharedModel.hiddenApps, metrics: metrics)
-                        .padding(.bottom, HomeDesign.searchPanelPadding)
+                    HomeSearchAppPanel(apps: sharedModel.hiddenApps, columns: columns, metrics: metrics)
                 }
             }
         }
-        .homeGlass(.rounded(HomeDesign.searchPanelCornerRadius))
     }
 
     /// Asks for Face ID, which shows the hidden apps until zContainer quits.

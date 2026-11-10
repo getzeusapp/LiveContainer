@@ -6,7 +6,7 @@ static NSString * const LCHomeButtonPlacementKey = @"ZCHomeButtonPlacement";
 // How many times closer to the top or bottom than to a side a point must be
 // for the button to rest against the top or bottom.
 static const CGFloat LCHomeButtonSidePreference = 3;
-// The first place: how far down the right edge the button rests.
+// The first place on an iPhone: how far down the right edge the button rests.
 static const CGFloat LCHomeButtonFirstFraction = 0.62;
 
 @implementation LCHomeButtonPlacement
@@ -28,7 +28,25 @@ static const CGFloat LCHomeButtonFirstFraction = 0.62;
         edge.integerValue >= LCHomeButtonEdgeLeft && edge.integerValue <= LCHomeButtonEdgeBottom) {
         return [[self alloc] initWithEdge:edge.integerValue fraction:fraction.doubleValue];
     }
-    return [[self alloc] initWithEdge:LCHomeButtonEdgeRight fraction:LCHomeButtonFirstFraction];
+    return nil;
+}
+
++ (instancetype)firstPlacementForInterfaceOrientation:(UIInterfaceOrientation)orientation {
+    if (UIDevice.currentDevice.userInterfaceIdiom != UIUserInterfaceIdiomPad) {
+        return [[self alloc] initWithEdge:LCHomeButtonEdgeRight fraction:LCHomeButtonFirstFraction];
+    }
+    // In landscape left, as UIKit names it, the iPad's Home button is on the
+    // left of the screen.
+    switch (orientation) {
+        case UIInterfaceOrientationLandscapeLeft:
+            return [[self alloc] initWithEdge:LCHomeButtonEdgeLeft fraction:0.5];
+        case UIInterfaceOrientationLandscapeRight:
+            return [[self alloc] initWithEdge:LCHomeButtonEdgeRight fraction:0.5];
+        case UIInterfaceOrientationPortraitUpsideDown:
+            return [[self alloc] initWithEdge:LCHomeButtonEdgeTop fraction:0.5];
+        default:
+            return [[self alloc] initWithEdge:LCHomeButtonEdgeBottom fraction:0.5];
+    }
 }
 
 + (instancetype)placementNearestToPoint:(CGPoint)point inArea:(CGRect)area {

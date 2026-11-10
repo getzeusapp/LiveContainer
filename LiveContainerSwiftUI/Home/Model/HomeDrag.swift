@@ -27,4 +27,25 @@ struct HomeDrag: Equatable {
     /// Whether the finger has moved further than a tap would since it picked
     /// the icon up. A folder held and let go without moving opens instead.
     var hasMoved = false
+    /// The icons tapped while the icon was held, which joined it, as on iOS:
+    /// in the order they joined, the newest on top of the stack under the
+    /// finger. They go down together after `item`, in that order.
+    var extras: [HomeItem] = []
+    /// Where each icon that joined was on screen, which it flew in from.
+    var joinedFrom: [HomeItem: CGPoint] = [:]
+    /// Where each icon that joined lands, once the stack is let go.
+    var landing: [HomeItem: CGPoint] = [:]
+    /// Whether the iPad's dock has bounced for being full while the icon was
+    /// held over it, which it does once a drag, as on iPadOS.
+    var hasBouncedDock = false
+
+    /// Every icon being moved, from the first picked up to the last to join.
+    var items: [HomeItem] {
+        [item] + extras
+    }
+
+    /// Whether any icon being moved is a folder, which can't go into one.
+    var holdsFolder: Bool {
+        items.contains(where: \.isFolder)
+    }
 }

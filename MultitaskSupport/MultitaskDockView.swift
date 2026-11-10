@@ -257,15 +257,21 @@ class AppInfoProvider {
         max(Constants.panelBasePadding, Constants.panelBasePadding + (width - Constants.defaultDockWidth) * Constants.panelPaddingPerExtraWidth)
     }
 
+    /// How many things the open dock stacks, each an icon tall: its apps,
+    /// and the plus button under them that adds one.
+    private var dockItemCount: Int {
+        self.apps.count + 1
+    }
+
     /// How tall the dock is without its icons, as it's drawn: the spacing
-    /// between them, and room for the last one's dot, inside its padding.
+    /// between them, and room for an app's dot, inside its padding.
     private func expandedDockBaseHeight(for width: CGFloat) -> CGFloat {
-        let totalSpacingHeight = CGFloat(max(self.apps.count - 1, 0)) * Constants.dockContentSpacing
+        let totalSpacingHeight = CGFloat(max(dockItemCount - 1, 0)) * Constants.dockContentSpacing
         return panelPadding(for: width) * 2 + totalSpacingHeight + Constants.indicatorSpace
     }
 
     private func expandedDockHeight(for width: CGFloat, iconSize: CGFloat) -> CGFloat {
-        expandedDockBaseHeight(for: width) + CGFloat(self.apps.count) * iconSize
+        expandedDockBaseHeight(for: width) + CGFloat(dockItemCount) * iconSize
     }
 
     
@@ -324,21 +330,29 @@ class AppInfoProvider {
     /// Puts the virtual windows' host view on the main window, and waits
     /// while no main window is known.
     ///
-    /// It goes on the root view itself, sized to it and above the Home
-    /// Screen, and comes back to the front when something covered it.
-    /// zContainer's root is its own SwiftUI view rather than a tab bar
-    /// controller whose view came first, so the first view there could be one
-    /// that scrolls with the Home Screen's pages, and anything the Home Screen
-    /// adds later, like its dock, would be drawn over the windows. The host
-    /// view passes touches through wherever there's no window, so being on
-    /// top costs the Home Screen nothing.
+    /// It goes just above the root view, sized to it, in the view the root
+    /// view is in, and comes back there when something covered it. Not in
+    /// the root view: that's SwiftUI's hosting view, whose gestures take every
+    /// touch on its subviews, so a long press on a window would open the menu
+    /// of the Home Screen icon or widget under it. The host view passes
+    /// touches through wherever there's no window, so being on top costs the
+    /// Home Screen nothing. Until the root view is on a window it goes in the
+    /// root view itself.
     private func attachWindowHostingView() {
         guard let window = keyWindow, let rootView = window.rootViewController?.view else { return }
-        if hostView.superview !== rootView {
-            hostView.frame = rootView.bounds
-            rootView.addSubview(hostView)
-        } else if rootView.subviews.last !== hostView {
-            rootView.bringSubviewToFront(hostView)
+        guard let container = rootView.superview else {
+            if hostView.superview == nil {
+                hostView.frame = rootView.bounds
+                rootView.addSubview(hostView)
+            }
+            return
+        }
+        let siblings = container.subviews
+        if hostView.superview !== container {
+            hostView.frame = rootView.frame
+            container.insertSubview(hostView, aboveSubview: rootView)
+        } else if let rootIndex = siblings.firstIndex(of: rootView), siblings.firstIndex(of: hostView) != rootIndex + 1 {
+            container.insertSubview(hostView, aboveSubview: rootView)
         }
     }
 
@@ -618,6 +632,11 @@ class AppInfoProvider {
             return false
         }
         passURLSchemeToView(targetView)
+        // On iPhone it may be coming forward into a half of the split screen.
+        if let decoratedVC = targetView._viewDelegate() as? DecoratedAppSceneViewController,
+           LCWindowSnapManager.shared.claimPhoneSplitRequest(forWindow: decoratedVC) {
+            return true
+        }
         animateViewAppearance(targetView, from: center, in: window)
         return true
     }
@@ -901,13 +920,14 @@ public struct MultitaskDockSwiftView: View {
     }
 
     /// The open dock: the apps, each with the dot the Mac's dock puts under
-    /// an app whose window shows.
+    /// an app whose window shows, and a plus under them that adds an app.
     private var panel: some View {
         VStack(spacing: MultitaskDockManager.Constants.dockContentSpacing) {
             ForEach(dockManager.apps) { app in
                 AppIconView(app: app, isWiggling: $isWigglingApps)
                     .transition(.scale(scale: 0.5).combined(with: .opacity))
             }
+            DockAddAppButton(isWiggling: $isWigglingApps)
         }
         .padding(dynamicPadding)
         // Room under the last app for its dot.
@@ -1069,6 +1089,63 @@ public struct MultitaskDockSwiftView: View {
     }
 
     public init() {}
+}
+
+extension Notification.Name {
+    /// Posted as the multitask dock's plus button is tapped, for the Home
+    /// Screen to offer the apps to open with multitasking.
+    static let multitaskDockAddApp = Notification.Name("LCMultitaskDockAddApp")
+}
+
+// MARK: - Add App Button
+/// The plus under the dock's apps, which has the Home Screen offer the apps
+/// to open with multitasking. A circle the size of the apps' icons, as their
+/// placeholder is. Only a tap opens the apps on offer: a finger that moves is
+/// dragging the dock. In wiggle mode a tap ends it.
+@available(iOS 16.0, *)
+struct DockAddAppButton: View {
+    @Binding var isWiggling: Bool
+    @EnvironmentObject var dockManager: MultitaskDockManager
+    @State private var isPressed = false
+
+    var body: some View {
+        let iconSize = dockManager.adaptiveIconSize
+        Image(systemName: "plus")
+            .font(.system(size: iconSize * 0.4, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: iconSize, height: iconSize)
+            .background(.white.opacity(isPressed ? 0.24 : 0.14), in: .circle)
+            .scaleEffect(isPressed ? 0.92 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: isPressed)
+            .contentShape(.circle)
+            .onPressGesture(
+                onPress: {
+                    isPressed = true
+                },
+                onCancel: {
+                    isPressed = false
+                },
+                onRelease: { _ in
+                    isPressed = false
+                    if isWiggling {
+                        isWiggling = false
+                        return
+                    }
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    offerApps()
+                }
+            )
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("zc.multitask.addApp".loc)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction {
+                offerApps()
+            }
+    }
+
+    private func offerApps() {
+        NotificationCenter.default.post(name: .multitaskDockAddApp, object: nil)
+    }
 }
 
 // MARK: - App Icon View

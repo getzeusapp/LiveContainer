@@ -17,22 +17,23 @@ struct ZeusAttentionRow: View {
     var showsChevron = false
 
     var body: some View {
-        LabeledContent {
-            HStack {
-                SettingsBadge(count: 1)
-                    .accessibilityHidden(true)
-
-                if showsChevron {
-                    // The weight of the chevron the list draws on rows that open a page.
-                    Image(systemName: "chevron.forward")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.tertiary)
-                        .accessibilityHidden(true)
-                }
-            }
-        } label: {
+        // The badge keeps to the trailing edge, and a title too long for a
+        // narrow sidebar wraps beside it rather than pushing it under.
+        HStack {
             Text(attention.title)
                 .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            SettingsBadge(count: 1)
+                .accessibilityHidden(true)
+
+            if showsChevron {
+                // The weight of the chevron the list draws on rows that open a page.
+                Image(systemName: "chevron.forward")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+                    .accessibilityHidden(true)
+            }
         }
         .contentShape(.rect)
     }

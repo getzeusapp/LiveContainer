@@ -7,11 +7,15 @@ import Foundation
 
 extension HomeLayout {
     /// The layout the Home Screen starts with when none is saved: Settings in
-    /// the dock, and the apps on the pages in LiveContainer's custom order when
-    /// one was saved, then in the order they were installed.
+    /// the dock, the widgets iOS's Home Screen starts with at the top of the
+    /// first page, and the apps on the pages in LiveContainer's custom order
+    /// when one was saved, then in the order they were installed.
     @MainActor
     static func firstLaunch(apps: [LCAppModel], customOrder: [String]) -> HomeLayout {
         var layout = HomeLayout()
+        for widget in HomeWidget.firstPageDefaults.reversed() {
+            layout.addWidget(widget, toPage: 0)
+        }
         for key in firstLaunchOrder(of: apps, customOrder: customOrder) {
             layout.append(.app(key))
         }

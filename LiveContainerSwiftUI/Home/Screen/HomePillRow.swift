@@ -14,13 +14,21 @@ import SwiftUI
 struct HomePillRow: View {
     /// How much the Home button shrinks to fit the row, 1 where it has room.
     let homeButtonScale: Double
+    /// Whether the row shows the page dots on their own, as iPhones with a
+    /// Home button do, rather than the search pill.
+    let isBare: Bool
+    /// Whether the wallpaper behind the row is bright.
+    let isOnBrightBackdrop: Bool
 
     @Environment(HomeScreenModel.self) private var model
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.homeButtonEdge) private var homeButtonEdge
     @GestureState private var isScrubbing = false
 
     var body: some View {
-        let content = model.pillContent
+        // On an iPad turned so its Home button isn't below the screen, the
+        // button stands beside the screen instead, as HomeEdgeButton.
+        let content = model.pillContent(homeButtonInRow: homeButtonEdge == .bottom)
 
         ZStack {
             if content == .homeButton {
@@ -32,6 +40,8 @@ struct HomePillRow: View {
                     pageCount: model.pageCount,
                     currentPage: model.page ?? 0,
                     showsPageDots: content == .pageDots,
+                    isBare: isBare,
+                    isOnBrightBackdrop: isOnBrightBackdrop,
                     action: model.openSearch
                 )
                 .transition(transition)

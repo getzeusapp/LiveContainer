@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-/// A folder's icon, as iOS 27 draws it: glass the size of an app icon,
+/// A folder's icon, as iOS draws it: glass the size of an app icon,
 /// holding its first nine icons small, three by three from the top left,
 /// with its name under it unless it is in the dock.
 struct HomeFolderIcon: View {
@@ -30,8 +30,7 @@ struct HomeFolderIcon: View {
     /// The glass with the small icons on it, in a grid as wide as it is
     /// tall, centered on the glass.
     private var tile: some View {
-        let mini = metrics.iconSize * HomeDesign.folderMiniRatio
-        let gap = metrics.iconSize * HomeDesign.folderMiniGapRatio
+        let (mini, gap) = HomeDesign.folderMini(iconSize: metrics.iconSize)
         let items = Array((folder?.items ?? []).prefix(HomeFolder.iconsPerPage))
         let columns = HomeFolderMetrics.columns
 

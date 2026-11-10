@@ -38,6 +38,9 @@ struct HomeIconContent: View {
                 }
             case .folder(let id):
                 HomeFolderIcon(folder: model.displayedLayout.folders[id], metrics: metrics, showsLabel: showsLabel, darkModeIcon: darkModeIcon)
+            case .widget:
+                // Widgets draw as HomeWidgetCell, not as icons.
+                EmptyView()
             }
         }
         .frame(

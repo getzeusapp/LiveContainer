@@ -26,6 +26,7 @@ struct JITSettingsView: View {
                 .labelsHidden()
             } header: {
                 Text("lc.settings.jitEnabler".loc)
+                .settingsSectionHeader()
             } footer: {
                 Text("lc.settings.JitDesc".loc)
             }

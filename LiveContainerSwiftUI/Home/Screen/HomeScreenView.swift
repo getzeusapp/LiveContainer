@@ -47,9 +47,9 @@ struct HomeScreenView: View {
             .accessibilityHidden(model.isSearching)
 
             // Search's dimming covers the whole screen and only fades, so
-            // it has no edge as search slides in.
+            // it has no edge as search slides in. iPad has none.
             Color.black
-                .opacity(HomeDesign.searchDimming * presence)
+                .opacity(HomeDesign.searchDimming * model.searchBackdropPresence)
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
@@ -63,19 +63,50 @@ struct HomeScreenView: View {
                     .allowsHitTesting(model.isSearching)
                     .transition(.opacity)
             }
+
+            // On iPhone, while the split screen waits for its second app, the
+            // apps to open there, in its second half, over black.
+            if model.isPickingSplitApp {
+                GeometryReader { safeArea in
+                    GeometryReader { screen in
+                        HomeSplitScreenPicker(
+                            size: screen.size,
+                            safeArea: Self.insets(of: safeArea.size, within: screen.frame(in: .named(Self.pickerSafeAreaSpace))),
+                            metrics: model.metrics ?? .reference
+                        )
+                    }
+                    .ignoresSafeArea()
+                }
+                .coordinateSpace(.named(Self.pickerSafeAreaSpace))
+                .ignoresSafeArea(.keyboard)
+                .transition(.opacity)
+            }
         }
+        .animation(HomeDesign.modeChange, value: model.isPickingSplitApp)
         .background {
             HomeWallpaperImage()
         }
         // The Home Screen is drawn for a dark wallpaper, whatever the
         // appearance setting. Screens opened over it keep the setting.
         .environment(\.colorScheme, .dark)
-        .homeStatusBarHidden(model.isEditing)
-        // A screen over the Home Screen, or onboarding, keeps the setting.
-        .preferredColorScheme(model.isCoveredByScreen || onboarding.coversHomeScreen ? nil : .dark)
+        // Edit mode's buttons take the status bar's place, and an open folder
+        // blurs it away with the rest of the Home Screen, as on iOS.
+        .homeStatusBarHidden(model.isEditing || model.isFolderShown)
+        // A screen over the Home Screen, onboarding, or a sheet from edit
+        // mode's Edit menu, keeps the setting, as iOS's widget gallery is
+        // light or dark as iOS is.
+        .background {
+            HomeWindowAppearance(isDark: !(model.isCoveredByScreen || model.isAddingWidget || model.isCustomizing || onboarding.coversHomeScreen))
+        }
         .homePresentations(zoomNamespace: zoomNamespace)
         .homeRouting(router, onRoute: model.handle)
         .onReceive(model.appsPublisher, perform: model.syncApps)
+        .onReceive(NotificationCenter.default.publisher(for: .LCPhoneSplitDidChange)) { _ in
+            model.phoneSplitDidChange()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .multitaskDockAddApp)) { _ in
+            model.isAddingMultitaskApp = true
+        }
         .onChange(of: coordinator.appSettingsCloseRequests) {
             model.closeAppSettings()
         }
@@ -84,6 +115,8 @@ struct HomeScreenView: View {
     /// The coordinate space of the safe area, which the whole screen is
     /// measured in to find the insets.
     private static let safeAreaSpace = "HomeSafeArea"
+    /// The same, for the split screen's apps on offer.
+    private static let pickerSafeAreaSpace = "HomeSplitPickerSafeArea"
 
     /// The safe area's insets, from its size and the whole screen's frame in
     /// its coordinates, which starts above and before it by the top and

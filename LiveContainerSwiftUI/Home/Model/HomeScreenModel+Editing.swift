@@ -44,6 +44,9 @@ extension HomeScreenModel {
         if drag != nil {
             commitDrop()
         }
+        if let resize = widgetResize {
+            widgetResizeEnded(resize.item)
+        }
         if let openFolderID {
             finishRenaming(openFolderID)
         }
@@ -99,6 +102,7 @@ extension HomeScreenModel {
     /// at the side of the screen turns the page. A folder that has just let
     /// it out only makes room, until the icon has moved off it.
     private func followOnHomeScreen(center: CGPoint, finger: CGPoint, metrics: HomeMetrics) {
+        bounceDockIfRefusing(at: center, metrics: metrics)
         let candidate = mergeCandidate(at: center, metrics: metrics)
         if candidate != blockedMerge {
             blockedMerge = nil
@@ -198,6 +202,11 @@ extension HomeScreenModel {
         }
         if let mergeTarget = drag.mergeTarget, let slot = drag.preview.slot(of: mergeTarget) {
             let destination = iconCenter(of: slot, in: drag.preview, metrics: metrics)
+            // The icons that joined go into the folder with it.
+            for extra in drag.extras {
+                drag.landing[extra] = destination
+            }
+            self.drag = drag
             withAnimation(HomeDesign.drop) {
                 liftedIconCenter = destination
                 isDropping = true
@@ -210,17 +219,48 @@ extension HomeScreenModel {
         let target = dropTarget(at: liftedIconCenter, metrics: metrics)
         if target != drag.target {
             drag.target = target
-            drag.preview = layout.moving(drag.item, to: target)
+            drag.preview = layout.moving(drag.item, with: drag.extras, to: target)
             withAnimation(HomeDesign.reflow) {
                 self.drag = drag
             }
         }
+        // Each icon that joined lands in its own place, after the first.
+        for extra in drag.extras {
+            if let slot = drag.preview.slot(of: extra) {
+                drag.landing[extra] = iconCenter(of: slot, in: drag.preview, metrics: metrics)
+            }
+        }
+        self.drag = drag
         let destination = iconCenter(of: drag.target, in: drag.preview, metrics: metrics)
         withAnimation(HomeDesign.drop) {
             liftedIconCenter = destination
             isDropping = true
         } completion: { [weak self] in
             self?.commitDrop()
+        }
+    }
+
+    /// Adds an icon tapped while another is held to what's being moved, as
+    /// iOS does with a second finger: it leaves its place, the icons after it
+    /// closing up, and flies into the stack under the finger, which counts the
+    /// icons it holds. Widgets don't join, nor does a folder while the stack
+    /// is in a folder.
+    func joinDrag(_ item: HomeItem) {
+        guard var drag, !isDropping, let metrics, item != drag.item, !drag.extras.contains(item),
+              !item.isWidget, !drag.item.isWidget, let slot = drag.preview.slot(of: item) else {
+            return
+        }
+        if item.isFolder, drag.target.folder != nil {
+            return
+        }
+        drag.joinedFrom[item] = iconCenter(of: slot, in: drag.preview, metrics: metrics)
+        drag.extras.append(item)
+        if drag.mergeTarget == item || (item.isFolder && drag.mergeTarget != nil) {
+            drag.mergeTarget = nil
+        }
+        drag.preview = layout.moving(drag.item, with: drag.extras, to: drag.target)
+        withAnimation(HomeDesign.reflow) {
+            self.drag = drag
         }
     }
 
@@ -292,7 +332,7 @@ extension HomeScreenModel {
 
     /// Puts the dropped icon into the icon it was let go over: at the end of
     /// the folder, or into a new folder made there, holding both, which then
-    /// opens, as on iOS.
+    /// opens, as on iOS. The icons that joined it go in after it.
     private func commitMerge() {
         guard let drag, let target = drag.mergeTarget else {
             commitDrop()
@@ -300,14 +340,21 @@ extension HomeScreenModel {
         }
         var merged = layout
         var newFolder: String?
+        let folder: String
         if case .folder(let id) = target {
             merged.remove(drag.item)
             merged.insert(drag.item, at: .folder(id, index: .max))
+            folder = id
         } else if case .folder(let id)? = merged.makeFolder(of: target, adding: drag.item, named: HomeFolder.defaultName) {
             newFolder = id
+            folder = id
         } else {
             commitDrop()
             return
+        }
+        for extra in drag.extras {
+            merged.remove(extra)
+            merged.insert(extra, at: .folder(folder, index: .max))
         }
         finishDrop(with: merged)
         if let newFolder {
@@ -372,9 +419,11 @@ extension HomeScreenModel {
         }
         var others = layout
         others.remove(drag.item)
-        // An iPad's dock glass fits its icons, so a dragged icon reaches the
-        // dock where the glass would be with it inside, one place wider.
-        if metrics.dockContains(center, count: min(others.dock.count + 1, HomeLayout.dockCapacity)) {
+        // An iPad's dock glass fits what it holds, so a dragged icon reaches
+        // the dock where the glass would be with it inside, one place wider.
+        // A widget stays on the pages, and so does an icon when the dock is
+        // full.
+        if !drag.item.isWidget, metrics.dockContains(center, dockContentsHolding(oneMoreThan: others)) {
             guard others.dock.count < HomeLayout.dockCapacity else {
                 return drag.target
             }
@@ -415,43 +464,94 @@ extension HomeScreenModel {
         }
         let before = place(index)
         let after = place(index + 1)
-        if isOverIcon(centeredAt: spot.center, center, metrics: metrics), drag.target == before || drag.target == after {
+        // Held over a widget, or holding one over something, the two trade
+        // places, as on iOS: the dragged one goes where the other was, after
+        // it when it came before it, and before it otherwise.
+        if drag.item.isWidget || spot.item.isWidget {
+            let page = page ?? 0
+            let order = page < layout.pages.count ? layout.pages[page] : []
+            if let dragged = order.firstIndex(of: drag.item), let held = order.firstIndex(of: spot.item) {
+                return dragged < held ? after : before
+            }
+            return isBefore ? before : after
+        }
+        if isOverIcon(spot, center, metrics: metrics), drag.target == before || drag.target == after {
             return drag.target
         }
         return isBefore ? before : after
     }
 
-    /// The icon on the page showing nearest to `center`, as `shown` has the
-    /// icons, or nil when `center` is past the page's last icon.
+    /// The icon or widget on the page showing at the place nearest to
+    /// `center`, as `shown` has them, or nil when that place is free. A
+    /// dragged widget is placed by its top left place, as iOS moves widgets.
     private func pageIcon(near center: CGPoint, in shown: HomeLayout, metrics: HomeMetrics) -> HomeIconSpot? {
         let current = page ?? 0
         guard current < shown.pages.count else {
             return nil
         }
-        let index = metrics.gridIndex(nearest: center)
-        guard index < shown.pages[current].count else {
+        let pageMetrics = shown.metrics(forPage: current, on: metrics)
+        let place = pageMetrics.gridIndex(nearest: gridPoint(for: center, metrics: pageMetrics))
+        guard let index = shown.grid(forPage: current, on: metrics).item(covering: place) else {
             return nil
         }
-        return HomeIconSpot(item: shown.pages[current][index], index: index, center: metrics.iconCenter(at: index))
+        return HomeIconSpot(item: shown.pages[current][index], index: index, center: shown.center(ofPage: current, index: index, on: metrics))
+    }
+
+    /// The point a dragged item is placed by: its center for an icon, and for
+    /// a widget the center of its top left place.
+    private func gridPoint(for center: CGPoint, metrics: HomeMetrics) -> CGPoint {
+        guard let drag, case .widget(let id) = drag.item, let widget = layout.widgets[id] else {
+            return center
+        }
+        let span = widget.size.span
+        return CGPoint(
+            x: center.x - Double(span.columns - 1) * metrics.pitch.width / 2,
+            y: center.y - Double(span.rows - 1) * metrics.pitch.height / 2
+        )
     }
 
     /// The dock icon nearest to `center`, as `shown` has the icons, or nil
     /// when the dock is empty.
     private func dockIcon(near center: CGPoint, in shown: HomeLayout, metrics: HomeMetrics) -> HomeIconSpot? {
-        let count = shown.dock.count
+        let contents = dockContents(of: shown)
         let spots = shown.dock.indices.map { index in
-            HomeIconSpot(item: shown.dock[index], index: index, center: metrics.dockIconCenter(at: index, count: count))
+            HomeIconSpot(item: shown.dock[index], index: index, center: metrics.dockIconCenter(at: index, in: contents), size: metrics.dockIconSize(contents))
         }
         return spots.min { first, second in
             hypot(first.center.x - center.x, first.center.y - center.y) < hypot(second.center.x - center.x, second.center.y - center.y)
         }
     }
 
-    /// Whether an icon held at `point` is over the icon centered at
-    /// `iconCenter` itself, rather than beside it.
-    private func isOverIcon(centeredAt iconCenter: CGPoint, _ point: CGPoint, metrics: HomeMetrics) -> Bool {
-        let reach = metrics.iconSize * HomeDesign.mergeZone
-        return abs(point.x - iconCenter.x) <= reach && abs(point.y - iconCenter.y) <= reach
+    /// Whether an icon held at `point` is over the icon at `spot` itself,
+    /// rather than beside it, which is closer in for a smaller icon, as in
+    /// an iPad dock whose icons have shrunk to fit.
+    private func isOverIcon(_ spot: HomeIconSpot, _ point: CGPoint, metrics: HomeMetrics) -> Bool {
+        let reach = (spot.size ?? metrics.iconSize) * HomeDesign.mergeZone
+        return abs(point.x - spot.center.x) <= reach && abs(point.y - spot.center.y) <= reach
+    }
+
+    /// What the dock holds with room for one more icon than `others` has in
+    /// it, as far as it can hold, for telling whether the icon being dragged
+    /// is over it.
+    private func dockContentsHolding(oneMoreThan others: HomeLayout) -> HomeDockContents {
+        HomeDockContents(icons: min(others.dock.count + 1, HomeLayout.dockCapacity), recents: dockRecents.count)
+    }
+
+    /// Bounces the iPad's dock when what's being dragged comes over it and
+    /// it can't take it, as iPadOS's does on the Home Screen, once a drag:
+    /// a widget, or any icon once the dock is full. Going into an icon there
+    /// to make a folder still works.
+    private func bounceDockIfRefusing(at center: CGPoint, metrics: HomeMetrics) {
+        guard let drag, !drag.hasBouncedDock, !SharedModel.isPhone else {
+            return
+        }
+        var others = layout
+        others.remove(drag.item)
+        guard drag.item.isWidget || others.dock.count >= HomeLayout.dockCapacity,
+              metrics.dockContains(center, dockContentsHolding(oneMoreThan: others)) else {
+            return
+        }
+        bounceDock()
     }
 
     /// The center of the icon at a slot, on screen. A slot on a page is taken
@@ -459,9 +559,9 @@ extension HomeScreenModel {
     private func iconCenter(of slot: HomeSlot, in layout: HomeLayout, metrics: HomeMetrics) -> CGPoint {
         switch slot {
         case .page(_, let index):
-            metrics.iconCenter(at: index)
+            layout.center(ofPage: page ?? 0, index: index, on: metrics)
         case .dock(let index):
-            metrics.dockIconCenter(at: index, count: layout.dock.count)
+            metrics.dockIconCenter(at: index, in: dockContents(of: layout))
         case .folder(_, let index):
             folderIconCenter(at: index, metrics: metrics)
         }
@@ -492,7 +592,7 @@ extension HomeScreenModel {
             return
         }
         drag.target = target
-        drag.preview = layout.moving(drag.item, to: target)
+        drag.preview = layout.moving(drag.item, with: drag.extras, to: target)
         withAnimation(HomeDesign.reflow) {
             self.drag = drag
         }
@@ -505,16 +605,16 @@ extension HomeScreenModel {
     /// dragged icon over most of it. A folder being dragged goes into
     /// nothing, as folders don't hold folders.
     private func mergeCandidate(at center: CGPoint, metrics: HomeMetrics) -> HomeItem? {
-        guard let drag, !drag.item.isFolder else {
+        guard let drag, !drag.holdsFolder, !drag.item.isWidget else {
             return nil
         }
         let shown = drag.preview
-        let spot = if metrics.dockContains(center, count: shown.dock.count) {
+        let spot = if metrics.dockContains(center, dockContents(of: shown)) {
             dockIcon(near: center, in: shown, metrics: metrics)
         } else {
             pageIcon(near: center, in: shown, metrics: metrics)
         }
-        guard let spot, spot.item != drag.item, isOverIcon(centeredAt: spot.center, center, metrics: metrics) else {
+        guard let spot, spot.item != drag.item, !spot.item.isWidget, isOverIcon(spot, center, metrics: metrics) else {
             return nil
         }
         return spot.item
@@ -586,7 +686,7 @@ extension HomeScreenModel {
         let target = HomeSlot.folder(id, index: items.count(where: { $0 != drag.item }))
         drag.mergeTarget = nil
         drag.target = target
-        drag.preview = layout.moving(drag.item, to: target)
+        drag.preview = layout.moving(drag.item, with: drag.extras, to: target)
         pendingTarget = target
         self.drag = drag
         openFolder(id)
@@ -598,7 +698,7 @@ extension HomeScreenModel {
     /// right side of the screen, and stops when it moves away.
     private func updatePageTurn(at finger: CGPoint, metrics: HomeMetrics) {
         let edge = HomeDesign.pageTurnEdge
-        let direction = if metrics.dockContains(finger, count: displayedLayout.dock.count) {
+        let direction = if metrics.dockContains(finger, dockContents) {
             0
         } else if finger.x < edge {
             -1
@@ -653,13 +753,15 @@ extension HomeScreenModel {
         var others = layout
         others.remove(drag.item)
         let count = next < others.pages.count ? others.pages[next].count : 0
-        let target = HomeSlot.page(next, index: min(metrics.gridIndex(nearest: liftedIconCenter), count))
+        let nextMetrics = others.metrics(forPage: next, on: metrics)
+        let place = nextMetrics.gridIndex(nearest: gridPoint(for: liftedIconCenter, metrics: nextMetrics))
+        let target = HomeSlot.page(next, index: others.grid(forPage: next, on: metrics).item(covering: place) ?? count)
         reflowTask?.cancel()
         pendingTarget = target
         cancelMerge()
         var turned = drag
         turned.target = target
-        turned.preview = layout.moving(drag.item, to: target)
+        turned.preview = layout.moving(drag.item, with: drag.extras, to: target)
         turned.mergeTarget = nil
         withAnimation(HomeDesign.reflow) {
             self.drag = turned
@@ -669,8 +771,13 @@ extension HomeScreenModel {
 
     // MARK: Removing
 
-    /// Asks whether to delete the app behind an icon, as its minus badge does.
+    /// Asks whether to delete the app behind an icon, or to remove a widget,
+    /// as its minus badge does.
     func requestRemoval(of item: HomeItem) {
+        if item.isWidget {
+            pendingWidgetRemoval = item
+            return
+        }
         guard case .app(let key) = item, let app = apps[key] else {
             return
         }

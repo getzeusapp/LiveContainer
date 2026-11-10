@@ -70,6 +70,27 @@ enum HomeLayoutStorage {
         defaults.set("custom", forKey: sortTypeKey)
     }
 
+    /// The iPad dock's recent apps as last saved, or nil before any were.
+    static func loadDockRecents() -> HomeDockRecents? {
+        guard let data = defaults.data(forKey: dockRecentsKey) else {
+            return nil
+        }
+        return try? JSONDecoder().decode(HomeDockRecents.self, from: data)
+    }
+
+    /// Saves the iPad dock's recent apps.
+    static func saveDockRecents(_ recents: HomeDockRecents) {
+        guard let data = try? JSONEncoder().encode(recents) else {
+            return
+        }
+        defaults.set(data, forKey: dockRecentsKey)
+    }
+
+    /// The defaults key the iPad dock's recent apps are saved under.
+    private static var dockRecentsKey: String {
+        forThisCopy("ZCDockRecents")
+    }
+
     /// Saves the page an app is opened from, for when zContainer comes back.
     static func saveReturnPage(_ page: Int) {
         defaults.set(page, forKey: returnPageKey)

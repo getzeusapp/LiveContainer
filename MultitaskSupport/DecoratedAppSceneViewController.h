@@ -12,6 +12,8 @@ API_AVAILABLE(ios(16.0))
 
 @property(nonatomic) BOOL isMaximized;
 @property(nonatomic) CGFloat scaleRatio;
+/// The container the window's app runs in.
+@property(nonatomic, readonly) NSString *dataUUID;
 /// Which half of the screen the window is snapped to (an LCWindowSnapSlot),
 /// or none while it floats.
 @property(nonatomic, readonly) NSInteger snapSlot;
@@ -40,6 +42,15 @@ API_AVAILABLE(ios(16.0))
 /// Called by LCWindowSnapManager: the window left its half and floats
 /// again, back where it was before it snapped when `restoresFrame`.
 - (void)didLeaveSnapRestoringFrame:(BOOL)restoresFrame;
+/// Called by LCWindowSnapManager: the window is in the other half now, as
+/// the halves swapped, or its half's corners turned with the screen.
+- (void)didMoveToSnapSlot:(NSInteger)slot;
+/// Called by LCWindowSnapManager on iPhone: the window fills a half of the
+/// split screen, at `frame`, coming out of the dock if it was in it.
+- (void)didEnterPhoneSplitSlot:(NSInteger)slot frame:(CGRect)frame;
+/// Called by LCWindowSnapManager on iPhone: the window fills the screen
+/// again, out of the split screen.
+- (void)didLeavePhoneSplitAnimated:(BOOL)animated;
 /// Brings a tucked-away window back onto the screen, against the side it
 /// was tucked into.
 - (void)unstashAnimated:(BOOL)animated;

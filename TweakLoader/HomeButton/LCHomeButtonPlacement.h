@@ -16,9 +16,16 @@ NS_ASSUME_NONNULL_BEGIN
 // 1 at its bottom or right end.
 @property (nonatomic, readonly) CGFloat fraction;
 
-// The place saved last, or else the first place: the right edge, a little
-// below the middle, clear of the bars most apps have at the top and bottom.
-+ (instancetype)savedPlacement;
+// The place saved last, or nil before the button was ever moved.
++ (nullable instancetype)savedPlacement;
+
+// The first place, before the button is moved. On an iPad it's halfway along
+// the edge beside the iPad's own Home button, as iPads with one have it, which
+// turns with the iPad: the bottom in portrait, the left or the right in
+// landscape, and the top upside down. On an iPhone it's the right edge, a
+// little below the middle, clear of the bars most apps have at the top and
+// bottom.
++ (instancetype)firstPlacementForInterfaceOrientation:(UIInterfaceOrientation)orientation;
 
 // The place on the edge nearest to `point`, for a button whose center moves
 // within `area`. The sides win over the top and bottom unless the point is

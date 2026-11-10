@@ -18,6 +18,8 @@ struct HomeAppSettingsScreen: View {
     var body: some View {
         NavigationStack {
             LCAppSettingsView(model: app)
+                // On iPad the settings keep their readable column instead.
+                .settingsPageMargins(isOnPad: false)
                 .readableContentWidth(Self.padReadableWidth)
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {

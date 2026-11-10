@@ -27,7 +27,7 @@ struct HomeFolderZoom: View {
     @Environment(\.prefersDarkAppIcons) private var darkModeIcon
 
     var body: some View {
-        let mini = iconFrame.width * HomeDesign.folderMiniRatio
+        let mini = HomeDesign.folderMini(iconSize: iconFrame.width).size
         let miniScale = mini / metrics.iconSize
 
         ZStack(alignment: .topLeading) {
@@ -61,7 +61,7 @@ struct HomeFolderZoom: View {
     /// The center of a small icon on the folder's icon, on screen: three by
     /// three, centered on the icon, as HomeFolderIcon draws them.
     private func miniCenter(at index: Int, mini: Double) -> CGPoint {
-        let gap = iconFrame.width * HomeDesign.folderMiniGapRatio
+        let gap = HomeDesign.folderMini(iconSize: iconFrame.width).gap
         let columns = HomeFolderMetrics.columns
         let grid = Double(columns) * mini + Double(columns - 1) * gap
         let inset = (iconFrame.width - grid) / 2

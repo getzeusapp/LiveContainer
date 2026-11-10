@@ -12,12 +12,15 @@ import SwiftUI
 /// Settings on iPhone does.
 ///
 /// While both columns show, the Home button sits at the bottom of the sidebar
-/// instead of in a bar across the whole screen. A collapsed window keeps the
-/// bar, so the button stays in reach on every page.
+/// instead of in a bar across the whole screen, while the iPad's own Home
+/// button is below the screen. Turned so it's beside the screen, the bar runs
+/// down that side instead. A collapsed window keeps the bar, so the button
+/// stays in reach on every page.
 struct SettingsSplitView: View {
     @Environment(HomeScreenModel.self) private var model
     @Environment(ZeusConnection.self) private var connection
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.homeButtonEdge) private var homeButtonEdge
 
     /// The page picked in the sidebar. Nil while a collapsed window shows the
     /// list alone. With room for both columns it is never nil, so the detail
@@ -32,12 +35,15 @@ struct SettingsSplitView: View {
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility, preferredCompactColumn: $compactColumn) {
+            // A plain sidebar, as the iPad's Settings app has, with the page
+            // picked lit up in it.
             SettingsRootList(selection: $page)
-                .listStyle(.insetGrouped)
+                .listStyle(.sidebar)
                 .navigationTitle("lc.tabView.settings".loc)
+                .modifier(SidebarTitleHidden())
                 .navigationSplitViewColumnWidth(min: Self.sidebarMinimumWidth, ideal: Self.sidebarWidth, max: Self.sidebarMaximumWidth)
                 .toolbar(removing: .sidebarToggle)
-                .settingsSidebarHomeButton(isShown: Self.placesHomeButtonInSidebar(horizontalSizeClass), action: model.goHome)
+                .settingsSidebarHomeButton(isShown: Self.placesHomeButtonInSidebar(horizontalSizeClass, edge: homeButtonEdge), action: model.goHome)
         } detail: {
             if let page {
                 NavigationStack {
@@ -56,10 +62,11 @@ struct SettingsSplitView: View {
 
     /// Whether the Home button sits at the bottom of the sidebar instead of in
     /// a bar across the screen: on iPad, while the window is wide enough for
-    /// the sidebar to show beside a page. HomePresentedScreenView leaves its
-    /// bar out then.
-    static func placesHomeButtonInSidebar(_ sizeClass: UserInterfaceSizeClass?) -> Bool {
-        !SharedModel.isPhone && sizeClass == .regular
+    /// the sidebar to show beside a page, and the iPad's Home button, which
+    /// zContainer's goes beside, is below the screen (`edge`).
+    /// HomePresentedScreenView leaves its bar out then.
+    static func placesHomeButtonInSidebar(_ sizeClass: UserInterfaceSizeClass?, edge: HomeButtonEdge) -> Bool {
+        !SharedModel.isPhone && sizeClass == .regular && edge == .bottom
     }
 
     /// Whether the row under the Zeus card opens a page, which it does unless
@@ -101,4 +108,16 @@ struct SettingsSplitView: View {
     private static let sidebarWidth = 375.0
     private static let sidebarMinimumWidth = 320.0
     private static let sidebarMaximumWidth = 420.0
+}
+
+/// Leaves the sidebar without a title over its search field, as the iPad's
+/// Settings app has it. The title still names the window.
+private struct SidebarTitleHidden: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content.toolbar(removing: .title)
+        } else {
+            content
+        }
+    }
 }

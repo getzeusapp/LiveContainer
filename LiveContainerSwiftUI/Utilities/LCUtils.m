@@ -8,6 +8,7 @@
 #import "../../LiveContainer/LCSharedUtils.h"
 #import "LCAppInfo.h"
 #import "../../MultitaskSupport/DecoratedAppSceneViewController.h"
+#import "../../MultitaskSupport/LCWindowSnapManager.h"
 #import "../../ZSign/zsigner.h"
 #import "LiveContainerSwiftUI-Swift.h"
 
@@ -87,6 +88,8 @@
         launcherView.pidAvailableHandler = completionHandler;
         launcherView.view.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleBottomMargin;
         launcherView.view.center = rootVC.view.center;
+        // On iPhone it may be opening into a half of the split screen.
+        [LCWindowSnapManager.shared claimPhoneSplitRequestForWindow:launcherView];
     });
 }
 

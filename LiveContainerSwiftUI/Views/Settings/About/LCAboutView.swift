@@ -27,6 +27,7 @@ struct LCAboutView: View {
                                url: LCAboutLinks.liveContainerContributors)
             } header: {
                 Text("lc.about.basedOn".loc)
+                .settingsSectionHeader()
             } footer: {
                 Text("lc.about.modifiedNotice".loc)
             }
@@ -46,6 +47,7 @@ struct LCAboutView: View {
                 }
             } header: {
                 Text("lc.about.legal".loc)
+                .settingsSectionHeader()
             } footer: {
                 Text("lc.about.licenseNotice".loc)
             }
@@ -56,6 +58,7 @@ struct LCAboutView: View {
                 }
             } header: {
                 Text("lc.about.acknowledgements".loc)
+                .settingsSectionHeader()
             }
         }
         .navigationTitle("lc.about.title".loc)

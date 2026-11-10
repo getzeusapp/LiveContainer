@@ -16,6 +16,11 @@
 - (void)splitDividerDidEndMoving:(LCSplitDividerView *)divider;
 /// VoiceOver asked to give the first window more room, or less.
 - (void)splitDivider:(LCSplitDividerView *)divider adjustGrowingFirst:(BOOL)growsFirst;
+@optional
+/// The finger took hold of the divider.
+- (void)splitDividerDidBeginMoving:(LCSplitDividerView *)divider;
+/// A double tap, or VoiceOver's action, asked to swap the windows.
+- (void)splitDividerDidDoubleTap:(LCSplitDividerView *)divider;
 @end
 
 /// The divider between two snapped windows: a pill in the gap between them

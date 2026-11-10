@@ -32,6 +32,18 @@ static const CGFloat LCSnapDetentReach = 0.05;
 /// How much the first window's share changes for one VoiceOver adjustment.
 static const CGFloat LCSnapAccessibilityStep = 0.1;
 
+NSNotificationName const LCPhoneSplitDidChangeNotification = @"LCPhoneSplitDidChangeNotification";
+/// Where an iPhone's split screen meets its divider, its apps' corners are
+/// rounded, as other phones round them.
+const CGFloat LCPhoneSplitCornerRadius = 22.0;
+/// How close to the end of the screen the divider has to be let go for the
+/// app beyond it to leave the split screen, as a share of the screen.
+static const CGFloat LCPhoneSplitDismissShare = 0.1;
+/// How dim the app about to leave gets while the divider is past that.
+static const CGFloat LCPhoneSplitDismissAlpha = 0.45;
+/// How long a request for a half waits for its app's window to open.
+static const NSTimeInterval LCPhoneSplitRequestLifetime = 30.0;
+
 @interface LCWindowSnapManager () <LCSplitDividerViewDelegate>
 @end
 
@@ -44,6 +56,21 @@ static const CGFloat LCSnapAccessibilityStep = 0.1;
     LCWindowSnapSlot _previewSlot;
     LCSplitDividerView *_divider;
     UISelectionFeedbackGenerator *_selectionFeedback;
+    /// On iPhone: the half the next window to open goes into, and when that
+    /// was asked for.
+    LCWindowSnapSlot _pendingSlot;
+    NSDate *_pendingDate;
+    /// On iPhone: the black behind the split screen's two apps.
+    UIView *_phoneBackdrop;
+    /// On iPhone: where the finger has the divider, as a share of the screen,
+    /// which can go past where the apps stop shrinking.
+    CGFloat _fingerRatio;
+    BOOL _awaitingSecond;
+    NSString *_announcedFirstUUID;
+}
+
++ (BOOL)usesPhoneLayout {
+    return UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone;
 }
 
 + (LCWindowSnapManager *)shared {
@@ -65,8 +92,12 @@ static const CGFloat LCSnapAccessibilityStep = 0.1;
 #pragma mark - Geometry
 
 /// The part of the screen windows snap into: inside the safe area, with a
-/// margin all round.
+/// margin all round. On iPhone, the whole screen: the apps go edge to edge,
+/// and each keeps clear of the parts of the screen it covers itself.
 - (CGRect)workAreaInView:(UIView *)hostView {
+    if (LCWindowSnapManager.usesPhoneLayout) {
+        return hostView.bounds;
+    }
     UIEdgeInsets insets = hostView.window ? hostView.window.safeAreaInsets : hostView.safeAreaInsets;
     CGRect area = UIEdgeInsetsInsetRect(hostView.bounds, insets);
     return CGRectInset(area, LCSnapMargin, LCSnapMargin);
@@ -76,6 +107,10 @@ static const CGFloat LCSnapAccessibilityStep = 0.1;
 /// than side by side.
 - (BOOL)stacksVerticallyInArea:(CGRect)area {
     return area.size.height >= area.size.width;
+}
+
+- (BOOL)stacksVerticallyInView:(UIView *)hostView {
+    return [self stacksVerticallyInArea:[self workAreaInView:hostView]];
 }
 
 /// How long the screen is along the split.
@@ -277,6 +312,13 @@ static const CGFloat LCSnapAccessibilityStep = 0.1;
     if (!window) {
         return;
     }
+    // On iPhone the app left in the other half fills the screen.
+    if (LCWindowSnapManager.usesPhoneLayout) {
+        if (_first == window || _second == window) {
+            [self removePhoneSplitWindow:window];
+        }
+        return;
+    }
     if (_first == window) {
         _first = nil;
     }
@@ -326,6 +368,13 @@ static const CGFloat LCSnapAccessibilityStep = 0.1;
             divider.frame = [self dividerFrameInView:hostView];
         }
     };
+    // On iPhone the corners rounded toward the divider follow the split as
+    // it turns, and the black behind the apps covers the screen.
+    if (LCWindowSnapManager.usesPhoneLayout) {
+        [first didMoveToSnapSlot:LCWindowSnapSlotFirst];
+        [second didMoveToSnapSlot:LCWindowSnapSlotSecond];
+        _phoneBackdrop.frame = hostView.bounds;
+    }
     if (animated) {
         [UIView animateWithDuration:0.35 delay:0 usingSpringWithDamping:0.86 initialSpringVelocity:0 options:UIViewAnimationOptionBeginFromCurrentState animations:place completion:nil];
     } else {
@@ -387,13 +436,216 @@ static const CGFloat LCSnapAccessibilityStep = 0.1;
 }
 
 - (void)windowVisibilityDidChange {
+    // On iPhone an app of the split screen going into the dock leaves it,
+    // and fills the screen when it comes back. The other app fills the
+    // screen now.
+    if (LCWindowSnapManager.usesPhoneLayout) {
+        DecoratedAppSceneViewController *first = _first;
+        DecoratedAppSceneViewController *second = _second;
+        DecoratedAppSceneViewController *hidden = first.view.hidden ? first : (second.view.hidden ? second : nil);
+        if (hidden) {
+            [self removePhoneSplitWindow:hidden];
+            [hidden didLeavePhoneSplitAnimated:NO];
+            return;
+        }
+    }
     UIView *hostView = _first.view.superview ?: _second.view.superview ?: _divider.superview;
     if (hostView) {
         [self updateDividerInView:hostView];
     }
 }
 
+#pragma mark - iPhone split screen
+
+- (void)requestPhoneSplitSlot:(LCWindowSnapSlot)slot {
+    _pendingSlot = slot;
+    _pendingDate = NSDate.date;
+}
+
+- (void)cancelPhoneSplitRequest {
+    _pendingSlot = LCWindowSnapSlotNone;
+    _pendingDate = nil;
+}
+
+- (BOOL)claimPhoneSplitRequestForWindow:(DecoratedAppSceneViewController *)window {
+    LCWindowSnapSlot slot = _pendingSlot;
+    if (!LCWindowSnapManager.usesPhoneLayout || slot == LCWindowSnapSlotNone || !window.view.superview) {
+        return NO;
+    }
+    BOOL isFresh = _pendingDate && -_pendingDate.timeIntervalSinceNow < LCPhoneSplitRequestLifetime;
+    [self cancelPhoneSplitRequest];
+    // The second half goes beside an app in the first.
+    if (!isFresh || (slot == LCWindowSnapSlotSecond && (!_first || _first == window))) {
+        return NO;
+    }
+    [self snapPhoneWindow:window toSlot:slot];
+    return YES;
+}
+
+- (BOOL)isAwaitingSecondPhoneSplitApp {
+    return _awaitingSecond;
+}
+
+- (NSString *)firstPhoneSplitDataUUID {
+    return _first.dataUUID;
+}
+
+- (void)startPhoneSplitWithWindow:(DecoratedAppSceneViewController *)window {
+    [self snapPhoneWindow:window toSlot:LCWindowSnapSlotFirst];
+}
+
+- (void)cancelPhoneSplit {
+    DecoratedAppSceneViewController *first = _first;
+    if (!first || _second) {
+        return;
+    }
+    [self removePhoneSplitWindow:first];
+    [first didLeavePhoneSplitAnimated:YES];
+}
+
+- (void)makeFullScreenFromPhoneSplit:(DecoratedAppSceneViewController *)window {
+    DecoratedAppSceneViewController *other = _first == window ? _second : (_second == window ? _first : nil);
+    if (!other) {
+        [self cancelPhoneSplit];
+        return;
+    }
+    // Its going into the dock takes it out of the split screen, and this
+    // one fills the screen.
+    [other minimizeWindow];
+}
+
+- (BOOL)prepareToAddPhoneSplitAppInView:(UIView *)hostView {
+    if (!LCWindowSnapManager.usesPhoneLayout || !hostView) {
+        return NO;
+    }
+    // A split screen, or one waiting for its second app, takes the new app
+    // in its second half.
+    DecoratedAppSceneViewController *first = _first;
+    if (first && first.view.superview == hostView && !first.view.hidden) {
+        return YES;
+    }
+    // Otherwise the frontmost app showing, if it fills the screen, moves up
+    // to make room.
+    for (UIView *view in hostView.subviews.reverseObjectEnumerator) {
+        DecoratedAppSceneViewController *window = (id)view._viewDelegate;
+        if (![window isKindOfClass:DecoratedAppSceneViewController.class] || view.hidden || view.alpha < 0.01) {
+            continue;
+        }
+        if (!window.isMaximized) {
+            return NO;
+        }
+        [self snapPhoneWindow:window toSlot:LCWindowSnapSlotFirst];
+        return YES;
+    }
+    return NO;
+}
+
+/// Puts a window into a half of the split screen. The first half starts a
+/// new one: the apps of one showing go into the dock. An app already in the
+/// half goes into the dock too.
+- (void)snapPhoneWindow:(DecoratedAppSceneViewController *)window toSlot:(LCWindowSnapSlot)slot {
+    UIView *hostView = window.view.superview;
+    if (!hostView || slot == LCWindowSnapSlotNone) {
+        return;
+    }
+    NSMutableArray<DecoratedAppSceneViewController *> *leaving = [NSMutableArray array];
+    for (DecoratedAppSceneViewController *other in @[_first ?: (id)NSNull.null, _second ?: (id)NSNull.null]) {
+        if ((id)other == NSNull.null || other == window) {
+            continue;
+        }
+        if (slot == LCWindowSnapSlotFirst || other == [self windowInSlot:slot]) {
+            [leaving addObject:other];
+        }
+    }
+    if (_first == window || [leaving containsObject:_first]) {
+        _first = nil;
+    }
+    if (_second == window || [leaving containsObject:_second]) {
+        _second = nil;
+    }
+    if (!_first && !_second) {
+        _ratio = 0.5;
+    }
+    [self setWindow:window inSlot:slot];
+    // In first, and out of the dock if it was there, so the apps leaving
+    // don't find it hidden in its half as they go.
+    [window didEnterPhoneSplitSlot:slot frame:[self frameForSlot:slot inView:hostView]];
+    for (DecoratedAppSceneViewController *other in leaving) {
+        [other minimizeWindow];
+        [other didLeavePhoneSplitAnimated:NO];
+    }
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    [self updatePhoneSplitInView:hostView];
+}
+
+/// Takes a window out of the split screen. The app in the other half fills
+/// the screen. The window itself is left as it is.
+- (void)removePhoneSplitWindow:(DecoratedAppSceneViewController *)window {
+    UIView *hostView = window.view.superview ?: _divider.superview;
+    DecoratedAppSceneViewController *other = _first == window ? _second : (_second == window ? _first : nil);
+    _first = nil;
+    _second = nil;
+    [other didLeavePhoneSplitAnimated:YES];
+    if (hostView) {
+        [self updatePhoneSplitInView:hostView];
+    }
+}
+
+/// Puts the black behind the two apps and the divider between them, and
+/// tells the Home Screen whether the second half waits for an app.
+- (void)updatePhoneSplitInView:(UIView *)hostView {
+    DecoratedAppSceneViewController *first = _first;
+    DecoratedAppSceneViewController *second = _second;
+    if ([self showsBothHalvesInView:hostView]) {
+        if (!_phoneBackdrop) {
+            _phoneBackdrop = [[UIView alloc] init];
+            _phoneBackdrop.backgroundColor = UIColor.blackColor;
+            _phoneBackdrop.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        }
+        _phoneBackdrop.frame = hostView.bounds;
+        // Under the lower of the two, over any other app's window under them.
+        NSArray<UIView *> *subviews = hostView.subviews;
+        UIView *lower = [subviews indexOfObject:first.view] < [subviews indexOfObject:second.view] ? first.view : second.view;
+        [_phoneBackdrop removeFromSuperview];
+        [hostView insertSubview:_phoneBackdrop belowSubview:lower];
+    } else {
+        [_phoneBackdrop removeFromSuperview];
+    }
+    [self updateDividerInView:hostView];
+
+    BOOL awaiting = first && !second && first.view.superview == hostView && !first.view.hidden;
+    NSString *firstUUID = first.dataUUID;
+    if (awaiting != _awaitingSecond || !(firstUUID == _announcedFirstUUID || [firstUUID isEqualToString:_announcedFirstUUID])) {
+        _awaitingSecond = awaiting;
+        _announcedFirstUUID = firstUUID;
+        [NSNotificationCenter.defaultCenter postNotificationName:LCPhoneSplitDidChangeNotification object:self];
+    }
+}
+
+/// While the divider is past where the app beyond it leaves on letting go,
+/// that app dims.
+- (void)updatePhoneSplitDismissHint {
+    BOOL dismissesFirst = _fingerRatio < LCPhoneSplitDismissShare;
+    BOOL dismissesSecond = _fingerRatio > 1 - LCPhoneSplitDismissShare;
+    UIView *firstView = _first.view;
+    UIView *secondView = _second.view;
+    CGFloat firstAlpha = dismissesFirst ? LCPhoneSplitDismissAlpha : 1;
+    CGFloat secondAlpha = dismissesSecond ? LCPhoneSplitDismissAlpha : 1;
+    if (firstView.alpha == firstAlpha && secondView.alpha == secondAlpha) {
+        return;
+    }
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium] impactOccurred];
+    [UIView animateWithDuration:0.2 delay:0 options:UIViewAnimationOptionBeginFromCurrentState animations:^{
+        firstView.alpha = firstAlpha;
+        secondView.alpha = secondAlpha;
+    } completion:nil];
+}
+
 #pragma mark - LCSplitDividerViewDelegate
+
+- (void)splitDividerDidBeginMoving:(LCSplitDividerView *)divider {
+    _fingerRatio = _ratio;
+}
 
 - (void)splitDivider:(LCSplitDividerView *)divider didMoveBy:(CGFloat)delta {
     UIView *hostView = divider.superview;
@@ -405,18 +657,43 @@ static const CGFloat LCSnapAccessibilityStep = 0.1;
         return;
     }
     CGFloat previous = _ratio;
-    _ratio = [self clampedRatio:_ratio + delta / length length:length];
+    _fingerRatio += delta / length;
+    _ratio = [self clampedRatio:(LCWindowSnapManager.usesPhoneLayout ? _fingerRatio : _ratio + delta / length) length:length];
     // A tick as the divider passes the middle.
     if ((previous - 0.5) * (_ratio - 0.5) < 0) {
         [_selectionFeedback selectionChanged];
     }
     [self layoutSnappedWindowsInView:hostView animated:NO];
+    if (LCWindowSnapManager.usesPhoneLayout) {
+        // Past where the apps stop shrinking, the divider follows the finger
+        // on toward the end of the screen.
+        CGRect frame = [self dividerFrameInView:hostView];
+        CGFloat overshoot = (_fingerRatio - _ratio) * length;
+        divider.frame = [self stacksVerticallyInArea:[self workAreaInView:hostView]] ? CGRectOffset(frame, 0, overshoot) : CGRectOffset(frame, overshoot, 0);
+        [self updatePhoneSplitDismissHint];
+    }
 }
 
 - (void)splitDividerDidEndMoving:(LCSplitDividerView *)divider {
     UIView *hostView = divider.superview;
     if (!hostView) {
         return;
+    }
+    // On iPhone, let go near the end of the screen, the app beyond the
+    // divider goes into the dock and the other fills the screen.
+    if (LCWindowSnapManager.usesPhoneLayout) {
+        DecoratedAppSceneViewController *leaving = nil;
+        if (_fingerRatio < LCPhoneSplitDismissShare) {
+            leaving = _first;
+        } else if (_fingerRatio > 1 - LCPhoneSplitDismissShare) {
+            leaving = _second;
+        }
+        _fingerRatio = _ratio;
+        if (leaving) {
+            [leaving minimizeWindow];
+            return;
+        }
+        [self updatePhoneSplitDismissHint];
     }
     for (size_t i = 0; i < sizeof(LCSnapDetents) / sizeof(LCSnapDetents[0]); i++) {
         if (fabs(_ratio - LCSnapDetents[i]) < LCSnapDetentReach) {
@@ -425,6 +702,23 @@ static const CGFloat LCSnapAccessibilityStep = 0.1;
         }
     }
     _ratio = [self clampedRatio:_ratio length:[self splitLengthInArea:[self workAreaInView:hostView]]];
+    [self layoutSnappedWindowsInView:hostView animated:YES];
+}
+
+/// A double tap on the divider swaps the two apps, as on other phones.
+- (void)splitDividerDidDoubleTap:(LCSplitDividerView *)divider {
+    UIView *hostView = divider.superview;
+    DecoratedAppSceneViewController *first = _first;
+    DecoratedAppSceneViewController *second = _second;
+    if (!hostView || ![self showsBothHalvesInView:hostView]) {
+        return;
+    }
+    _first = second;
+    _second = first;
+    _ratio = 1 - _ratio;
+    [second didMoveToSnapSlot:LCWindowSnapSlotFirst];
+    [first didMoveToSnapSlot:LCWindowSnapSlotSecond];
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     [self layoutSnappedWindowsInView:hostView animated:YES];
 }
 

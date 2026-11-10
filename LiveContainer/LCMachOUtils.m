@@ -400,7 +400,7 @@ uint64_t LCFindSymbolOffset(const char *basePath, const char *symbol) {
     return offset;
 }
 
-mach_header_u *LCGetLoadedImageHeader(int i0, const char* name) {
+struct mach_header_64 *LCGetLoadedImageHeader(int i0, const char* name) {
     for(uint32_t i = i0; i < _dyld_image_count(); ++i) {
         const char* imgName = _dyld_get_image_name(i);
         // cover simulator path aswell

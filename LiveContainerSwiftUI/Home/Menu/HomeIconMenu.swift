@@ -17,6 +17,8 @@ struct HomeIconMenu: View {
     let item: HomeItem
     /// The app behind the icon, or nil for Settings.
     let app: LCAppModel?
+    /// Whether the icon is a recent app in the iPad's dock.
+    var isRecent = false
 
     @Environment(HomeScreenModel.self) private var model
 
@@ -25,7 +27,7 @@ struct HomeIconMenu: View {
             switch item {
             case .app:
                 if let app {
-                    HomeAppMenu(app: app, showsEditHomeScreen: true)
+                    HomeAppMenu(app: app, showsEditHomeScreen: true, isRecent: isRecent)
                 }
             case .folder(let id):
                 Button("zc.home.renameFolder".loc, systemImage: "pencil") {
@@ -34,6 +36,11 @@ struct HomeIconMenu: View {
                 Button("zc.home.editHomeScreen".loc, systemImage: .homeScreenSymbol, action: model.beginEditingAfterMenu)
             case .settings:
                 Button("zc.home.editHomeScreen".loc, systemImage: .homeScreenSymbol, action: model.beginEditingAfterMenu)
+            case .widget:
+                Button("zc.home.editHomeScreen".loc, systemImage: .homeScreenSymbol, action: model.beginEditingAfterMenu)
+                Button("zc.widget.remove".loc, systemImage: "minus.circle", role: .destructive) {
+                    model.requestRemoval(of: item)
+                }
             }
         }
     }

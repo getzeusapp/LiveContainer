@@ -32337,6 +32337,30 @@
         }
       }
     },
+    "zc.home.openInSplitScreen" : {
+      "comment" : "Home Screen app menu on iPhone: opens the app in the top half of a split screen, with the bottom half then offering the apps to open beside it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open in Split Screen"
+          }
+        }
+      }
+    },
+    "zc.home.openWithMultitasking" : {
+      "comment" : "Home Screen app menu on iPhone: switch that has the app open full screen over zContainer's Home Screen, able to run beside other apps and in a split screen, rather than taking over zContainer.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open with Multitasking"
+          }
+        }
+      }
+    },
     "zc.home.renameFolder" : {
       "comment" : "Home Screen: long-press menu item on a folder that lets the person change its name.",
       "extractionState" : "manual",
@@ -32661,6 +32685,78 @@
         }
       }
     },
+    "zc.home.search.apps" : {
+      "comment" : "Search's title over the other apps found for what's typed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps"
+          }
+        }
+      }
+    },
+    "zc.home.search.showHidden" : {
+      "comment" : "Search: at the end of the Hidden section's title, asks for Face ID and shows the hidden apps.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show"
+          }
+        }
+      }
+    },
+    "zc.home.search.showLess" : {
+      "comment" : "Search: at the end of the suggestions' title, goes back to one row of suggested apps.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Less"
+          }
+        }
+      }
+    },
+    "zc.home.search.showMore" : {
+      "comment" : "Search: at the end of the suggestions' title, shows a second row of suggested apps.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show More"
+          }
+        }
+      }
+    },
+    "zc.home.search.suggestions" : {
+      "comment" : "Search's title over the apps opened most recently, before anything is typed, where iOS's Spotlight shows its suggestions.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suggestions"
+          }
+        }
+      }
+    },
+    "zc.home.search.topHit" : {
+      "comment" : "Search's title over the best match for what's typed, which the keyboard's Search key opens.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Top Hit"
+          }
+        }
+      }
+    },
     "zc.install.busy" : {
       "comment" : "Shown when an app or an install link arrives while zContainer is installing another app.",
       "extractionState" : "manual",
@@ -32669,6 +32765,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "zContainer is installing another app. Try again once it’s done."
+          }
+        }
+      }
+    },
+    "zc.multitask.addApp" : {
+      "comment" : "Multitask dock: the plus button under its apps, and the title of the apps it offers to open with multitasking.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add App"
+          }
+        }
+      }
+    },
+    "zc.multitask.addApp.noApps" : {
+      "comment" : "Shown by the multitask dock's Add App when every app that can run with multitasking is already open.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every app that can run with multitasking is open."
           }
         }
       }
@@ -33489,14 +33609,14 @@
         }
       }
     },
-    "zc.settings.appIconFooter" : {
-      "comment" : "Settings > Appearance: footer under the choice of zContainer’s own icon.",
+    "zc.settings.apps.search" : {
+      "comment" : "Settings > Apps: the search field's placeholder, as the Settings app's Apps page has it.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "zContainer’s icon on your Home Screen. OG is the icon zContainer had before."
+            "value" : "Search Apps"
           }
         }
       }
@@ -33825,6 +33945,30 @@
         }
       }
     },
+    "zc.settings.general.detail" : {
+      "comment" : "Settings > General: what the page is for, under its name in the card at the top, as the Settings app's General page says what it holds.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage your overall setup and preferences for zContainer, such as storage, app data, and more."
+          }
+        }
+      }
+    },
+    "zc.settings.app.detail" : {
+      "comment" : "Settings > Apps > an app: what the app's page is for, under the app's name in the card at the top, as the Settings app's page for each app says. %@ is the app's name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage how %@ runs in zContainer, such as its data, tweaks, and more."
+          }
+        }
+      }
+    },
     "zc.settings.appearance" : {
       "comment" : "Settings: row and page title for how zContainer looks: the Home button over apps, the app icons, and zContainer’s own icon.",
       "extractionState" : "manual",
@@ -33833,6 +33977,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Appearance"
+          }
+        }
+      }
+    },
+    "zc.settings.appearance.dockRecents" : {
+      "comment" : "Settings > Appearance, on iPad: switch that shows the apps opened most recently at the end of the Home Screen's dock, as iPadOS's Show Suggested and Recent Apps in Dock does.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Recent Apps in Dock"
+          }
+        }
+      }
+    },
+    "zc.settings.appearance.dockRecentsFooter" : {
+      "comment" : "Settings > Appearance, on iPad: footer under the Show Recent Apps in Dock switch.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows the apps you opened most recently after a divider at the end of the dock."
           }
         }
       }
@@ -33856,25 +34024,25 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Shows a round button over the apps you open that takes you back to zContainer. Without it, close an app from the App Switcher to come back. zContainer’s own screens always show it."
+            "value" : "Shows a Home button inside your apps."
           }
         }
       }
     },
-    "zc.settings.appearance.iconStyle" : {
-      "comment" : "Settings > Appearance: title of the choice of light or dark app icons.",
+    "zc.settings.appearance.theme" : {
+      "comment" : "Settings > Appearance: the section that picks whether zContainer, and the icons on its Home Screen, are light or dark.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App Icons"
+            "value" : "App Theme"
           }
         }
       }
     },
-    "zc.settings.appearance.iconStyle.automatic" : {
-      "comment" : "Settings > Appearance > App Icons: icons follow Dark Mode.",
+    "zc.settings.appearance.theme.automatic" : {
+      "comment" : "Settings > Appearance > App Theme: the switch that has zContainer follow iOS's Light and Dark Mode.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -33885,20 +34053,8 @@
         }
       }
     },
-    "zc.settings.appearance.iconStyle.dark" : {
-      "comment" : "Settings > Appearance > App Icons: always the dark icons.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dark"
-          }
-        }
-      }
-    },
-    "zc.settings.appearance.iconStyle.light" : {
-      "comment" : "Settings > Appearance > App Icons: always the light icons.",
+    "zc.settings.appearance.theme.light" : {
+      "comment" : "Settings > Appearance > App Theme: the name under the picture of the light Home Screen.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -33909,14 +34065,14 @@
         }
       }
     },
-    "zc.settings.appearance.iconStyleFooter" : {
-      "comment" : "Settings > Appearance: footer under the App Icons choice.",
+    "zc.settings.appearance.theme.dark" : {
+      "comment" : "Settings > Appearance > App Theme: the name under the picture of the dark Home Screen.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Automatic shows the dark versions of app icons while Dark Mode is on."
+            "value" : "Dark"
           }
         }
       }
@@ -34629,6 +34785,30 @@
         }
       }
     },
+    "zc.splitScreen.chooseApp" : {
+      "comment" : "Title over the apps offered for the second half of an iPhone's split screen, while the first half holds an app.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose an App"
+          }
+        }
+      }
+    },
+    "zc.splitScreen.noApps" : {
+      "comment" : "Shown in the second half of an iPhone's split screen when no other app can open there.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No other apps can open beside it."
+          }
+        }
+      }
+    },
     "zc.update.confirm" : {
       "comment" : "App sent from Zeus: button that installs the newer version over the copy in zContainer.",
       "extractionState" : "manual",
@@ -34937,6 +35117,450 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Opens %@ in zContainer with JIT."
+          }
+        }
+      }
+    },
+    "zc.home.edit" : {
+      "comment" : "Home Screen edit mode: the button at the top left that opens the Edit menu, as iOS's does.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        }
+      }
+    },
+    "zc.home.addWidget" : {
+      "comment" : "Home Screen edit mode's Edit menu: opens the widget gallery.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Widget"
+          }
+        }
+      }
+    },
+    "zc.home.customize" : {
+      "comment" : "Home Screen edit mode's Edit menu: opens Customize, which picks the app theme.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Customize"
+          }
+        }
+      }
+    },
+    "zc.home.editWallpaper" : {
+      "comment" : "Home Screen edit mode's Edit menu: chooses a photo for the wallpaper.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Wallpaper"
+          }
+        }
+      }
+    },
+    "zc.widget.calendar" : {
+      "comment" : "Home Screen widget: the Calendar app's name, under its widget and in the widget gallery.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calendar"
+          }
+        }
+      }
+    },
+    "zc.widget.maps" : {
+      "comment" : "Home Screen widget: the Maps app's name, under its widget and in the widget gallery.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maps"
+          }
+        }
+      }
+    },
+    "zc.widget.news" : {
+      "comment" : "Home Screen widget: the News app's name, under its widget and in the widget gallery.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "News"
+          }
+        }
+      }
+    },
+    "zc.widget.photos" : {
+      "comment" : "Home Screen widget: the Photos app's name, under its widget and in the widget gallery.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photos"
+          }
+        }
+      }
+    },
+    "zc.widget.reminders" : {
+      "comment" : "Home Screen widget: the Reminders app's name, under its widget and in the widget gallery.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminders"
+          }
+        }
+      }
+    },
+    "zc.widget.stack" : {
+      "comment" : "Home Screen widget: a stack of widgets that swipes from one to the next, as VoiceOver names it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smart Stack"
+          }
+        }
+      }
+    },
+    "zc.widget.calendar.upNext" : {
+      "comment" : "Widget gallery: the Calendar widget's name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Up Next"
+          }
+        }
+      }
+    },
+    "zc.widget.maps.map" : {
+      "comment" : "Widget gallery: the Maps widget's name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Map"
+          }
+        }
+      }
+    },
+    "zc.widget.news.today" : {
+      "comment" : "Widget gallery: the News widget's name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today"
+          }
+        }
+      }
+    },
+    "zc.widget.photos.featured" : {
+      "comment" : "Widget gallery: the Photos widget's name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Featured Photos"
+          }
+        }
+      }
+    },
+    "zc.widget.reminders.list" : {
+      "comment" : "Widget gallery: the Reminders widget's name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "List"
+          }
+        }
+      }
+    },
+    "zc.widget.calendar.detail" : {
+      "comment" : "Widget gallery: what the Calendar widget shows.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep track of your upcoming events and meetings."
+          }
+        }
+      }
+    },
+    "zc.widget.maps.detail" : {
+      "comment" : "Widget gallery: what the Maps widget shows.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See a map of where you are."
+          }
+        }
+      }
+    },
+    "zc.widget.news.detail" : {
+      "comment" : "Widget gallery: what the News widget shows.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get today’s news, including top stories."
+          }
+        }
+      }
+    },
+    "zc.widget.photos.detail" : {
+      "comment" : "Widget gallery: what the Photos widget shows.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See your featured photos and memories."
+          }
+        }
+      }
+    },
+    "zc.widget.reminders.detail" : {
+      "comment" : "Widget gallery: what the Reminders widget shows.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See your reminders from a list."
+          }
+        }
+      }
+    },
+    "zc.widget.calendar.noEvents" : {
+      "comment" : "Calendar widget: shown under the date when nothing is on today.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Events Today"
+          }
+        }
+      }
+    },
+    "zc.widget.news.noStories" : {
+      "comment" : "News widget: shown when there are no stories to show.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Stories"
+          }
+        }
+      }
+    },
+    "zc.widget.news.topStories" : {
+      "comment" : "News widget: the heading of the day's top stories.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Top Stories"
+          }
+        }
+      }
+    },
+    "zc.widget.news.trending" : {
+      "comment" : "News widget: the heading of the stories trending now.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trending"
+          }
+        }
+      }
+    },
+    "zc.widget.photos.processing" : {
+      "comment" : "Photos widget: shown before there are photos to feature.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photos will appear here when they are finished processing"
+          }
+        }
+      }
+    },
+    "zc.widget.reminders.none" : {
+      "comment" : "Reminders widget: shown when the list is empty.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Reminders"
+          }
+        }
+      }
+    },
+    "zc.widget.remove" : {
+      "comment" : "A widget's long-press menu: takes the widget off the Home Screen.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove Widget"
+          }
+        }
+      }
+    },
+    "zc.widget.removeTitle %@" : {
+      "comment" : "The question asked before a widget is removed. %@ is the widget's name.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove “%@”?"
+          }
+        }
+      }
+    },
+    "zc.widget.removeConfirm" : {
+      "comment" : "The button that removes a widget, in the question asked first.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove"
+          }
+        }
+      }
+    },
+    "zc.widget.removeMessage" : {
+      "comment" : "The question asked before a widget is removed: what removing it does.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Removing this widget will not delete any data."
+          }
+        }
+      }
+    },
+    "zc.widget.gallery.search" : {
+      "comment" : "Widget gallery: the search field's placeholder.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search Widgets"
+          }
+        }
+      }
+    },
+    "zc.widget.gallery.add" : {
+      "comment" : "Widget gallery: the button that adds the widget shown, at the size picked.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Widget"
+          }
+        }
+      }
+    },
+    "zc.widget.reminders.complete %@" : {
+      "comment" : "Reminders widget: what VoiceOver says for the circle that checks a reminder off. %@ is the reminder.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complete “%@”"
+          }
+        }
+      }
+    },
+    "zc.widget.reminders.today" : {
+      "comment" : "Reminders widget: when a reminder is due, today.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today"
+          }
+        }
+      }
+    },
+    "zc.widget.reminders.tomorrow" : {
+      "comment" : "Reminders widget: when a reminder is due, tomorrow.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomorrow"
+          }
+        }
+      }
+    },
+    "zc.widget.reminders.yesterday" : {
+      "comment" : "Reminders widget: when an overdue reminder was due, yesterday.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yesterday"
+          }
+        }
+      }
+    },
+    "zc.widget.calendar.tomorrow" : {
+      "comment" : "Calendar widget: the heading over tomorrow's events and hours.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomorrow"
           }
         }
       }

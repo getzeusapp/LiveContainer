@@ -16,7 +16,7 @@ struct AppIconSwatch: View {
     @ScaledMetric(relativeTo: .body) private var size = 56.0
 
     /// How round the Home Screen draws an icon's corners, for its width.
-    private static let cornerRatio = 0.225
+    private static let cornerRatio = HomeDesign.iconCornerFraction
     /// How thick the ring around the icon in use is.
     private static let ring = 2.5
 

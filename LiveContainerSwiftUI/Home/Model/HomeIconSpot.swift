@@ -12,4 +12,7 @@ struct HomeIconSpot {
     let item: HomeItem
     let index: Int
     let center: CGPoint
+    /// The icon's size there, when it isn't the pages' icon size, as in an
+    /// iPad dock whose icons have shrunk to fit.
+    var size: Double? = nil
 }

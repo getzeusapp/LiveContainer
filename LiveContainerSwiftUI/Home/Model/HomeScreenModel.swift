@@ -119,6 +119,19 @@ final class HomeScreenModel {
 
     /// The app the person asked to remove, while the question shows.
     var pendingRemoval: LCAppModel?
+    /// The widget the person asked to remove, while the question shows.
+    var pendingWidgetRemoval: HomeItem?
+    /// The widget being resized by its handle in edit mode, or settling at
+    /// its size once let go, or nil.
+    var widgetResize: HomeWidgetResize?
+    /// The layout with that widget at the size the other icons make room
+    /// for. It's apart from the resize, which follows the finger with a
+    /// quicker spring than the icons make room with.
+    var widgetResizePreview: HomeLayout?
+    /// Whether the widget gallery is open, from edit mode's Edit menu.
+    var isAddingWidget = false
+    /// Whether Customize is open, from edit mode's Edit menu.
+    var isCustomizing = false
     /// Whether Files is open to pick an IPA to install.
     var isChoosingIPA = false
     /// How to add an app once the screen over the Home Screen has closed,
@@ -134,7 +147,31 @@ final class HomeScreenModel {
 
     /// The app zooming open from its icon, just before zContainer turns into it.
     var launchZoom: HomeLaunchZoom?
+    /// On iPhone, whether the split screen's first half holds an app and the
+    /// second waits for one, which the Home Screen then offers there.
+    var isPickingSplitApp = false
+    /// The container of the app in the split screen's first half, which the
+    /// apps offered for the second leave out.
+    var splitFirstDataUUID: String?
+    /// Whether an app picked for the split screen is on its way.
+    var isOpeningSplitApp = false
+    /// Whether the apps the multitask dock's plus offers show.
+    var isAddingMultitaskApp = false
     @ObservationIgnored var launchZoomContinuation: CheckedContinuation<Void, Never>?
+
+    /// The recent apps the iPad's dock keeps, as saved, including any that
+    /// went into the dock since and don't show; `dockRecents` are those that do.
+    var dockRecentsStore = HomeDockRecents()
+    /// Whether the iPad's dock shows recent apps, as Settings > Appearance
+    /// says. The Home Screen view keeps it up to date.
+    var showsDockRecents = HomeDockRecents.isEnabled
+    /// How many times the iPad's dock has bounced, for being full when an
+    /// icon was held over it. The dock bounces each time it goes up.
+    var dockBounces = 0
+    /// The icon whose screen, Settings or an app's settings, zooms out of its
+    /// place among the dock's recent apps rather than out of its own icon,
+    /// while the screen it was opened with shows.
+    var zoomsFromRecent: HomeItem?
 
     /// Loads the saved layout, or makes the first one from LiveContainer's
     /// custom order or the install order, and brings it in line with the apps.
@@ -154,6 +191,7 @@ final class HomeScreenModel {
         page = returnPage
         builtPages = (returnPage - 1)...(returnPage + 1)
         syncApps(apps)
+        loadDockRecents()
     }
 
     /// Reports every change to the list of apps the Home Screen shows. The
@@ -165,7 +203,13 @@ final class HomeScreenModel {
     /// The layout on screen: the saved one, or while an icon is dragged, the
     /// one with the icon where it would drop.
     var displayedLayout: HomeLayout {
-        drag?.preview ?? layout
+        widgetResizePreview ?? drag?.preview ?? layout
+    }
+
+    /// Whether an icon joined the one being dragged. Its place where the
+    /// stack would land stays empty, its view hidden there, until it lands.
+    private func isJoined(_ item: HomeItem) -> Bool {
+        drag?.extras.contains(item) == true
     }
 
     /// The icons on the pages and where each one shows.
@@ -174,7 +218,7 @@ final class HomeScreenModel {
         var placements: [HomePlacement] = []
         for (page, items) in shown.pages.enumerated() {
             for (index, item) in items.enumerated() where item != drag?.item {
-                placements.append(HomePlacement(item: item, slot: .page(page, index: index), isLifted: false))
+                placements.append(HomePlacement(item: item, slot: .page(page, index: index), isLifted: isJoined(item)))
             }
         }
         if let drag, drag.origin.page != nil {
@@ -190,7 +234,7 @@ final class HomeScreenModel {
         let items = displayedLayout.folders[id]?.items ?? []
         var placements: [HomePlacement] = []
         for (index, item) in items.enumerated() where item != drag?.item {
-            placements.append(HomePlacement(item: item, slot: .folder(id, index: index), isLifted: false))
+            placements.append(HomePlacement(item: item, slot: .folder(id, index: index), isLifted: isJoined(item)))
         }
         if let drag, drag.origin.folder == id {
             let slot = drag.target.folder == id ? drag.target : drag.origin
@@ -216,7 +260,7 @@ final class HomeScreenModel {
         let shown = displayedLayout
         var placements: [HomePlacement] = []
         for (index, item) in shown.dock.enumerated() where item != drag?.item {
-            placements.append(HomePlacement(item: item, slot: .dock(index), isLifted: false))
+            placements.append(HomePlacement(item: item, slot: .dock(index), isLifted: isJoined(item)))
         }
         if let drag, drag.origin.isInDock {
             let slot = drag.target.isInDock ? drag.target : drag.origin
@@ -277,7 +321,9 @@ final class HomeScreenModel {
         if updated.slot(of: drag.item) == nil {
             cancelDrag()
         } else {
-            drag.preview = updated.moving(drag.item, to: drag.target)
+            // An icon that joined and has gone since stays gone.
+            drag.extras.removeAll { updated.slot(of: $0) == nil }
+            drag.preview = updated.moving(drag.item, with: drag.extras, to: drag.target)
             self.drag = drag
         }
     }

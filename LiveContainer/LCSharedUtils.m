@@ -262,11 +262,13 @@ static NSString * const LCZeusGroupBase = @"group.app.reiko.zeus";
 + (BOOL)launchToGuestAppWithClassicMode:(NSUInteger)classicMode {
     void (^completionHandler)(BOOL) = ^(BOOL success) {
         // syscall(SYS_ptrace, PT_DENY_ATTACH, 0, 0, 0);
+#if defined(__arm64__)
         __asm__ __volatile__ (
                               "mov x0, #31\n"
                               "mov x16, #26\n"
                               "svc #0x80"
                               );
+#endif
         raise(SIGKILL);
     };
     

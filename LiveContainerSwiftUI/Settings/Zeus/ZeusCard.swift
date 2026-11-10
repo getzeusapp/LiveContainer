@@ -35,7 +35,6 @@ struct ZeusCard: View {
                     .foregroundStyle(connection.isExpired ? Color.red : Color.secondary)
             }
         }
-        .padding(.vertical, SettingsDesign.cardPadding)
         .accessibilityElement(children: .combine)
     }
 }

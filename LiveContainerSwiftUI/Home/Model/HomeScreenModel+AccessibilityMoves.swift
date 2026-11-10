@@ -61,6 +61,10 @@ extension HomeScreenModel {
             apps[key]?.displayName ?? ""
         case .folder(let id):
             displayedLayout.folders[id]?.name ?? ""
+        case .widget(let id):
+            displayedLayout.widgets[id].map { widget in
+                widget.isStack ? "zc.widget.stack".loc : widget.kinds.first?.title ?? ""
+            } ?? ""
         }
     }
 

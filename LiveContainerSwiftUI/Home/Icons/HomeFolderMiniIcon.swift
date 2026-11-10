@@ -31,7 +31,7 @@ struct HomeFolderMiniIcon: View {
                 }
             case .settings?:
                 HomeSettingsArtwork(size: size, cornerRadius: cornerRadius)
-            case .folder?, nil:
+            case .folder?, .widget?, nil:
                 Color.clear
             }
         }

@@ -25,6 +25,35 @@ final class WallpaperStore {
     /// halo zContainer comes with.
     private(set) var isCustom = false
 
+    /// How bright the wallpaper is behind parts of the screen, for the
+    /// wallpaper showing, so it's worked out once.
+    @ObservationIgnored private var brightnesses: [String: Double] = [:]
+
+    /// How bright the wallpaper is behind a part of a screen of `screenSize`,
+    /// from 0 for black to 1 for white, as it shows: dimmed in Dark Mode when
+    /// it's dimmed. Nil while there's no wallpaper.
+    func brightness(behind rect: CGRect, onScreenOf screenSize: CGSize, isDark: Bool) -> Double? {
+        guard let image else {
+            return nil
+        }
+        let key = "\(ObjectIdentifier(image).hashValue) \(rect) \(screenSize)"
+        let brightness: Double
+        if let known = brightnesses[key] {
+            brightness = known
+        } else {
+            guard let measured = WallpaperFile.brightness(of: image, behind: rect, onScreenOf: screenSize) else {
+                return nil
+            }
+            if brightnesses.count > 16 {
+                brightnesses.removeAll()
+            }
+            brightnesses[key] = measured
+            brightness = measured
+        }
+        let isDimmed = isCustom && dimsInDarkMode && isDark
+        return isDimmed ? brightness * (1 - HomeDesign.wallpaperDimming) : brightness
+    }
+
     /// Whether a new wallpaper is being made from a photo.
     private(set) var isPreparing = false
 

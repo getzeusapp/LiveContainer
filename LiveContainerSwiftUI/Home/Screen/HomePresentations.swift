@@ -31,6 +31,23 @@ struct HomePresentations: ViewModifier {
                     Text("zc.home.deleteKeepDataMessage".loc)
                 }
             }
+            .alert(
+                "zc.widget.removeTitle %@".localizeWithFormat(model.pendingWidgetRemoval.map(model.title(of:)) ?? ""),
+                isPresented: Binding<Bool>.isPresented(for: $model.pendingWidgetRemoval),
+                presenting: model.pendingWidgetRemoval
+            ) { _ in
+                Button("zc.widget.removeConfirm".loc, role: .destructive, action: model.removePendingWidget)
+                Button("lc.common.cancel".loc, role: .cancel) { }
+            } message: { _ in
+                Text("zc.widget.removeMessage".loc)
+            }
+            .modifier(HomeWidgetGalleryPresentation(isPresented: $model.isAddingWidget))
+            .sheet(isPresented: $model.isCustomizing) {
+                HomeCustomizeSheet()
+            }
+            .sheet(isPresented: $model.isAddingMultitaskApp) {
+                HomeAddAppSheet()
+            }
             .alert("lc.appList.installFromUrl".loc, isPresented: $model.isEnteringInstallURL) {
                 TextField(text: $model.installURL, prompt: Text(verbatim: "https://")) {
                     Text("lc.appList.installFromUrl".loc)

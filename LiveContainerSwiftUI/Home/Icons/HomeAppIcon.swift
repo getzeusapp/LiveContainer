@@ -36,6 +36,7 @@ struct HomeAppIcon: View {
                     }
                 }
                 .clipShape(.rect(cornerRadius: metrics.iconCornerRadius))
+                .homeIconRim(cornerRadius: metrics.iconCornerRadius)
                 .overlay {
                     if app.isSigningInProgress {
                         HomeProgressPie(progress: app.signProgress, cornerRadius: metrics.iconCornerRadius)

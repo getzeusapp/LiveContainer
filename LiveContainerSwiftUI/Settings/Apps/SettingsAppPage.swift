@@ -18,6 +18,7 @@ struct SettingsAppPage: View {
 
     var body: some View {
         LCAppSettingsView(model: app)
+            .settingsPageMargins()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {

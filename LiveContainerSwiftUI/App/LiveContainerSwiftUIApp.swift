@@ -114,6 +114,10 @@ struct LiveContainerSwiftUIApp : SwiftUI.App {
             UserDefaults.lcShared().set(Array(tempURLSchemes), forKey: "LCGuestURLSchemes")
         }
 
+        // Zeus's pink in place of iOS's blue, in every window, before the
+        // first one opens.
+        AppAccent.tintWindows()
+
         // Made after the apps are loaded, so the coordinator becomes their
         // delegate and the Home Screen places them.
         let coordinator = AppLaunchCoordinator(sharedModel: DataManager.shared.model)

@@ -8,15 +8,16 @@ import SwiftUI
 /// Where things go in an open folder, measured from iOS 27's on an iPhone: a
 /// glass panel in the middle of the screen holding three rows of three
 /// icons, at the Home Screen's icon size and spacing, as far in from the
-/// panel's edges as the icons are apart, with the folder's name in large
-/// type above it, lined up with the first column. On a screen too short to
+/// panel's edges as the icons are apart, with room for page dots under the
+/// last row, and the folder's name in large type above it, lined up with
+/// the first column. On a screen too short to
 /// keep the name on screen above a centered panel, such as an iPhone's in
 /// landscape, the panel sits lower, just under the name, and its rows come
 /// closer to its top and bottom edges as far as it needs to fit.
 struct HomeFolderMetrics: Equatable {
     /// The panel the icons sit in, on screen.
     let panel: CGRect
-    /// The panel's corner radius: half an icon, as on iOS.
+    /// The panel's corner radius, which grows with the icons, as on iOS.
     let cornerRadius: Double
     /// The size of an icon, and of an icon with its name under it.
     let iconSize: Double
@@ -34,7 +35,7 @@ struct HomeFolderMetrics: Equatable {
         cellHeight = metrics.cellHeight
         pitch = metrics.pitch
         inset = max(metrics.pitch.width - metrics.iconSize, 0)
-        cornerRadius = metrics.iconSize / 2
+        cornerRadius = metrics.iconSize * HomeDesign.folderCornerRatio
         let columns = Double(HomeFolderMetrics.columns)
         let width = 2 * inset + (columns - 1) * pitch.width + iconSize
         let rowsHeight = (columns - 1) * pitch.height + cellHeight
@@ -46,7 +47,7 @@ struct HomeFolderMetrics: Equatable {
         // Never so close that the page dots would reach the last row's names.
         let leastInset = HomeDesign.folderPageDotsInset + HomeDesign.folderPageDotSize
         verticalInset = min(inset, max((room - rowsHeight) / 2, leastInset))
-        let height = 2 * verticalInset + rowsHeight
+        let height = 2 * verticalInset + rowsHeight + HomeDesign.folderPageDotsRoom
         panel = CGRect(
             x: (metrics.size.width - width) / 2,
             y: max((metrics.size.height - height) / 2, titleRoom),

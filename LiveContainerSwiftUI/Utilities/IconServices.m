@@ -42,6 +42,18 @@
 
 @interface ISIcon : NSObject
 - (CGImageRef)CGImageForImageDescriptor:(ISImageDescriptor *)imageDescriptor;
+- (instancetype)initWithType:(NSString *)type;
+- (id)prepareImageForDescriptor:(ISImageDescriptor *)imageDescriptor;
+@end
+
+@interface ISImageDescriptor (Sized)
+- (instancetype)initWithSize:(CGSize)size scale:(CGFloat)scale;
+@end
+
+// What prepareImageForDescriptor: returns.
+@interface ISImageResult : NSObject
+- (CGImageRef)CGImage;
+- (BOOL)placeholder;
 @end
 
 @interface ISConcreteIcon : ISIcon
@@ -279,6 +291,36 @@ CGImageRef loadCGImageFromURL(NSURL *url) {
 }
 
 @implementation UIImage(LiveContainer)
++ (instancetype)graphicIconOfType:(NSString *)type size:(CGFloat)size dark:(BOOL)dark {
+    if(!dlopen("/System/Library/PrivateFrameworks/IconServices.framework/IconServices", RTLD_LAZY|RTLD_GLOBAL)) {
+        return nil;
+    }
+    // ISTypeIcon is the icon of a type, as Settings asks for one.
+    Class iconClass = PrivClass(ISTypeIcon);
+    Class descriptorClass = PrivClass(ISImageDescriptor);
+    if(![iconClass instancesRespondToSelector:@selector(initWithType:)] ||
+       ![iconClass instancesRespondToSelector:@selector(prepareImageForDescriptor:)] ||
+       ![descriptorClass instancesRespondToSelector:@selector(initWithSize:scale:)]) {
+        return nil;
+    }
+    // The type's ISGraphicIconConfiguration in MobileCoreTypes, a symbol on a
+    // shaded tile, drawn as Settings draws its rows' icons.
+    ISIcon* icon = [[iconClass alloc] initWithType:type];
+    ISImageDescriptor* descriptor = [[descriptorClass alloc] initWithSize:CGSizeMake(size, size) scale:UIScreen.mainScreen.scale];
+    if(@available(iOS 16.0, *)) {
+        descriptor.appearance = dark ? 1 : 0;
+    }
+    ISImageResult* image = [icon prepareImageForDescriptor:descriptor];
+    if(!image || ([image respondsToSelector:@selector(placeholder)] && [image placeholder])) {
+        return nil;
+    }
+    CGImageRef imageRef = [image CGImage];
+    if(!imageRef) {
+        return nil;
+    }
+    return [UIImage imageWithCGImage:imageRef scale:descriptor.scale orientation:UIImageOrientationUp];
+}
+
 + (instancetype)generateIconForBundleURL:(NSURL*)url style:(GeneratedIconStyle)style hasBorder:(BOOL)hasBorder {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{

@@ -18,26 +18,47 @@ struct HomeSpringboard: View {
     let zoomNamespace: Namespace.ID
 
     @Environment(HomeScreenModel.self) private var model
+    @Environment(WallpaperStore.self) private var wallpaper
+    @Environment(SystemAppearance.self) private var system
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.homeButtonEdge) private var homeButtonEdge
     @EnvironmentObject private var sceneDelegate: SceneDelegate
+    /// Whether the iPad's dock shows recent apps, as Settings > Appearance says.
+    @AppStorage(HomeDockRecents.settingKey) private var showsDockRecents = true
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             Group {
-                // The pages sink back and blur as search comes in, as far as a
-                // pull down has brought it.
+                // On iPhone the pages sink back and blur as search comes in,
+                // as far as a pull down has brought it. iPad's search leaves
+                // them as they are.
                 HomePagesView(metrics: metrics, zoomNamespace: zoomNamespace)
-                    .scaleEffect(1 - (1 - HomeDesign.searchScale) * model.searchPresence)
-                    .blur(radius: HomeDesign.searchBlur * model.searchPresence)
+                    .scaleEffect(1 - (1 - HomeDesign.searchScale) * model.searchBackdropPresence)
+                    .blur(radius: HomeDesign.searchBlur * model.searchBackdropPresence)
 
-                // The dock and the search pill only fade away as search comes in,
-                // as on iOS. Blurring or shrinking glass makes it redraw unevenly
-                // every frame.
+                // The dock only fades away as search comes in on iPhone, as on
+                // iOS. Blurring or shrinking glass makes it redraw unevenly
+                // every frame. On iPad it stays.
+                HomeDock(metrics: metrics, zoomNamespace: zoomNamespace)
+                    .opacity(1 - model.searchBackdropPresence)
+
+                // The row above the dock fades away as search comes in, on
+                // iPad too, where search shows the Home button there instead.
                 Group {
-                    HomeDock(metrics: metrics, zoomNamespace: zoomNamespace)
-
-                    HomePillRow(homeButtonScale: metrics.pillButtonScale)
+                    // iPadOS and iPhones with a Home button have no search pill,
+                    // only the page dots.
+                    HomePillRow(
+                        homeButtonScale: metrics.pillButtonScale,
+                        isBare: metrics.isDockFlush || !SharedModel.isPhone,
+                        isOnBrightBackdrop: isPillOnBrightBackdrop
+                    )
                         .position(metrics.pillCenter)
+
+                    // An iPad turned so its Home button is beside the screen,
+                    // or above it, has zContainer's Home button there instead.
+                    if homeButtonEdge != .bottom {
+                        HomeEdgeButton(edge: homeButtonEdge, metrics: metrics)
+                    }
                 }
                 .opacity(1 - model.searchPresence)
             }
@@ -67,6 +88,22 @@ struct HomeSpringboard: View {
                 publishMetrics()
             }
         }
+        .onChange(of: showsDockRecents) {
+            model.setShowsDockRecents(showsDockRecents)
+        }
+    }
+
+    /// Whether the wallpaper behind the search pill is bright, where its text
+    /// and dots turn dark.
+    private var isPillOnBrightBackdrop: Bool {
+        let pill = CGRect(
+            x: metrics.pillCenter.x - HomeDesign.pillBackdropWidth / 2,
+            y: metrics.pillCenter.y - HomeDesign.pillHeight / 2,
+            width: HomeDesign.pillBackdropWidth,
+            height: HomeDesign.pillHeight
+        )
+        let brightness = wallpaper.brightness(behind: pill, onScreenOf: metrics.size, isDark: system.isDark) ?? 0
+        return brightness > HomeDesign.brightBackdrop
     }
 
     /// Hands this screen's metrics to the model, for dragging, the launch zoom

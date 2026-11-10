@@ -29,6 +29,7 @@ struct AdvancedSettingsView: View {
                 Section {
                     NavigationLink {
                         LCTweakFolderView(baseUrl: LCPath.tweakPath, isRoot: true)
+                            .settingsPageMargins()
                     } label: {
                         Text("lc.tabView.tweaks".loc)
                     }
@@ -38,6 +39,7 @@ struct AdvancedSettingsView: View {
             Section {
                 NavigationLink {
                     LCMultitaskSettingView()
+                        .settingsPageMargins()
                 } label: {
                     Text("lc.appBanner.multitask".loc)
                 }
@@ -48,6 +50,7 @@ struct AdvancedSettingsView: View {
             Section {
                 NavigationLink {
                     JITSettingsView()
+                        .settingsPageMargins()
                 } label: {
                     LabeledContent("zc.settings.advanced.jit".loc, value: jitEnabler.displayName)
                 }
@@ -92,6 +95,7 @@ struct AdvancedSettingsView: View {
             Section {
                 NavigationLink {
                     LCJITLessDiagnoseView()
+                        .settingsPageMargins()
                 } label: {
                     Text("lc.settings.jitlessDiagnose".loc)
                 }
@@ -99,6 +103,7 @@ struct AdvancedSettingsView: View {
                 if sharedModel.developerMode {
                     NavigationLink {
                         DeveloperSettingsView()
+                            .settingsPageMargins()
                     } label: {
                         Text("zc.settings.developer".loc)
                     }
